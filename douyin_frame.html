@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<title>似曾相识 · 刷视频学单词</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* ============ 手机外框（桌面预览时居中显示） ============ */
+  .phone {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============ 顶部沉浸式覆盖层（状态栏 + 导航栏） ============ */
+  .top-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.35) 50%,
+      rgba(0, 0, 0, 0) 100%);
+  }
+  .top-overlay > * { pointer-events: auto; }
+
+  /* ============ 状态栏 ============ */
+  .status-bar {
+    height: 44px;
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: transparent;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+  .status-bar .time { font-variant-numeric: tabular-nums; }
+  .status-icons {
+    display: flex; align-items: center; gap: 5px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  }
+  .status-icons svg { display: block; }
+
+  /* ============ 顶部导航栏 ============ */
+  .top-nav {
+    height: 44px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+  }
+  .top-nav .nav-tab,
+  .top-nav .nav-icon {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  }
+  .nav-icon {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    background: transparent; border: none;
+    cursor: pointer;
+  }
+  .nav-tabs {
+    flex: 1;
+    display: flex; align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    height: 100%;
+    padding: 0 4px;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    height: 100%;
+    display: flex; align-items: center;
+    position: relative;
+    transition: color 0.2s;
+  }
+  .nav-tab.active {
+    color: #fff;
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .nav-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 3px;
+    background: #fff;
+    border-radius: 2px;
+  }
+
+  /* ============ 内容区域（可嵌入 HTML 的插槽） ============ */
+  .content-stage {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+  }
+  /* iframe 插槽 - 用于内嵌外部 HTML */
+  #contentFrame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: transparent;
+  }
+  /* 内容覆盖层（默认隐藏，仅当未加载 iframe 时显示占位） */
+  .content-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(180deg, #1a2820 0%, #0a1410 100%);
+  }
+  .content-placeholder .ph-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 8px;
+  }
+  .content-placeholder code {
+    background: rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #ffd66e;
+    font-size: 12px;
+  }
+
+  /* ============ 底部操作按钮区域 ============ */
+  .bottom-actions {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    padding: 12px 16px 10px;
+    z-index: 10;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+  }
+  .bottom-actions > * { pointer-events: auto; }
+  .action-row {
+    display: flex;
+    gap: 12px;
+  }
+  .action-btn {
+    flex: 1;
+    height: 46px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+  }
+  .action-btn.primary {
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    border-color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .swipe-hint {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    animation: bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  /* ============ 底部 Tab 栏 ============ */
+  .tab-bar {
+    flex-shrink: 0;
+    height: calc(50px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+    position: relative;
+    z-index: 30;
+  }
+  .tab-item {
+    flex: 1;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.55);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+  }
+  .tab-item.active { color: #fff; font-weight: 700; }
+  .tab-item.center {
+    flex: 0 0 56px;
+  }
+  .tab-plus {
+    width: 44px; height: 30px;
+    border-radius: 8px;
+    background: #fff;
+    color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 300;
+    position: relative;
+  }
+  .tab-plus::before {
+    content: ""; position: absolute;
+    left: -3px; top: 0; bottom: 0;
+    width: 100%;
+    background: #fe2c55;
+    border-radius: 8px;
+    z-index: -1;
+  }
+  .tab-plus::after {
+    content: ""; position: absolute;
+    right: -3px; top: 0; bottom: 0;
+    width: 100%;
+    background: #25f4ee;
+    border-radius: 8px;
+    z-index: -1;
+  }
+  .tab-plus span {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Home Indicator (iOS 风格) */
+  .home-indicator {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: #fff;
+    border-radius: 3px;
+    z-index: 40;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+
+  <!-- 沉浸式顶部覆盖层 -->
+  <div class="top-overlay">
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <!-- 信号 -->
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <!-- WiFi -->
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 11l2.5-2.5a3.5 3.5 0 0 0-5 0L8 11z"/><path d="M8 6a6 6 0 0 1 4.3 1.8l1.4-1.4a8 8 0 0 0-11.4 0l1.4 1.4A6 6 0 0 1 8 6z"/><path d="M8 2a10 10 0 0 1 7.1 3l-1.4 1.4a8 8 0 0 0-11.4 0L0.9 5A10 10 0 0 1 8 2z"/></svg>
+        <!-- 电池 -->
+        <svg width="27" height="12" viewBox="0 0 27 12"><rect x="0.5" y="0.5" width="22" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="2" height="4" rx="1" fill="currentColor" fill-opacity="0.5"/></svg>
+      </div>
+    </div>
+
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+      <button class="nav-icon" aria-label="菜单">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="13" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="17" y2="18"/></svg>
+      </button>
+      <div class="nav-tabs" id="navTabs">
+        <div class="nav-tab">团购</div>
+        <div class="nav-tab">经验</div>
+        <div class="nav-tab">北京</div>
+        <div class="nav-tab">关注</div>
+        <div class="nav-tab">商城</div>
+        <div class="nav-tab active">推荐</div>
+      </div>
+      <button class="nav-icon" aria-label="搜索">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ 内容嵌入区 (Slot) ============ -->
+  <!-- 内嵌内容接口：
+       1. 通过 URL 参数：?src=your-content.html
+       2. 通过 JS API：window.loadContent(url) / window.setContentHTML(htmlString)
+       3. 直接修改 iframe src 属性
+  -->
+  <div class="content-stage">
+    <iframe id="contentFrame" name="contentFrame" title="内容区" src="index.html" allowfullscreen></iframe>
+    <div class="content-placeholder" id="placeholder" style="display:none;">
+      <div class="ph-title">内容嵌入区</div>
+      <div>通过 <code>?src=xxx.html</code> 或 JS 接口加载内容</div>
+      <div style="margin-top:6px;">例如：<code>window.loadContent('demo.html')</code></div>
+    </div>
+
+    <!-- 底部操作按钮（覆盖在内容区上方） -->
+    <div class="bottom-actions">
+      <div class="action-row">
+        <button class="action-btn">不感兴趣</button>
+        <button class="action-btn primary" id="openImmerseBtn">查看详情</button>
+      </div>
+      <div class="swipe-hint">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        上滑继续看视频
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部 Tab 栏 -->
+  <nav class="tab-bar">
+    <button class="tab-item active">首页</button>
+    <button class="tab-item">朋友</button>
+    <button class="tab-item center" aria-label="发布">
+      <div class="tab-plus"><span>+</span></div>
+    </button>
+    <button class="tab-item">消息</button>
+    <button class="tab-item">我</button>
+  </nav>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+  // ============ 内容嵌入接口 ============
+  const frame = document.getElementById('contentFrame');
+  const placeholder = document.getElementById('placeholder');
+
+  /**
+   * 加载外部 HTML 文件到内容区
+   * @param {string} url - HTML 文件路径或 URL
+   */
+  window.loadContent = function (url) {
+    if (!url) return;
+    placeholder.style.display = 'none';
+    frame.src = url;
+  };
+
+  /**
+   * 直接将 HTML 字符串注入到内容区
+   * @param {string} html - 完整的 HTML 文档字符串
+   */
+  window.setContentHTML = function (html) {
+    placeholder.style.display = 'none';
+    const blob = new Blob([html], { type: 'text/html' });
+    frame.src = URL.createObjectURL(blob);
+  };
+
+  /**
+   * 清空内容区，显示占位
+   */
+  window.clearContent = function () {
+    frame.src = 'about:blank';
+    placeholder.style.display = '';
+  };
+
+  // 启动：从 URL 参数 ?src= 自动加载
+  const params = new URLSearchParams(location.search);
+  const initSrc = params.get('src');
+  if (initSrc) {
+    window.loadContent(initSrc);
+  }
+
+  // 顶部 Tab 切换
+  document.getElementById('navTabs').addEventListener('click', e => {
+    const tab = e.target.closest('.nav-tab');
+    if (!tab) return;
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+
+  // "查看详情" 触发 iframe 内的沉浸式模式
+  document.getElementById('openImmerseBtn').addEventListener('click', () => {
+    try {
+      const innerDoc = frame.contentDocument || frame.contentWindow?.document;
+      const btn = innerDoc?.getElementById('openImmerse');
+      if (btn) {
+        btn.click();
+      }
+    } catch (err) {
+      console.warn('无法访问 iframe 内的沉浸式按钮:', err);
+    }
+  });
+
+  // 底部 Tab 切换
+  document.querySelectorAll('.tab-bar .tab-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.classList.contains('center')) return;
+      document.querySelectorAll('.tab-bar .tab-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
