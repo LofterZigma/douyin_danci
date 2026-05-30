@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#000000" />
-<title>似曾相识 · 刷视频学单词</title>
+<title>抖音框架</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
   html, body {
@@ -165,58 +165,6 @@
     font-size: 12px;
   }
 
-  /* ============ 底部操作按钮区域 ============ */
-  .bottom-actions {
-    position: absolute;
-    left: 0; right: 0;
-    bottom: 0;
-    padding: 12px 16px 10px;
-    z-index: 10;
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
-    pointer-events: none;
-  }
-  .bottom-actions > * { pointer-events: auto; }
-  .action-row {
-    display: flex;
-    gap: 12px;
-  }
-  .action-btn {
-    flex: 1;
-    height: 46px;
-    border-radius: 23px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: transform 0.15s, background 0.2s;
-  }
-  .action-btn.primary {
-    background: rgba(255, 255, 255, 0.95);
-    color: #111;
-    border-color: rgba(255, 255, 255, 0.95);
-    font-weight: 600;
-  }
-  .action-btn:active { transform: scale(0.97); }
-  .swipe-hint {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    animation: bob 1.6s ease-in-out infinite;
-  }
-  @keyframes bob {
-    0%, 100% { transform: translateY(0); opacity: 0.7; }
-    50% { transform: translateY(-3px); opacity: 1; }
-  }
-
   /* ============ 底部 Tab 栏 ============ */
   .tab-bar {
     flex-shrink: 0;
@@ -244,6 +192,11 @@
     border: none;
   }
   .tab-item.active { color: #fff; font-weight: 700; }
+  .tab-bar-bottom-spacer {
+    flex-shrink: 0;
+    height: 50px;
+    background: #000;
+  }
   .tab-item.center {
     flex: 0 0 56px;
   }
@@ -344,17 +297,6 @@
       <div style="margin-top:6px;">例如：<code>window.loadContent('demo.html')</code></div>
     </div>
 
-    <!-- 底部操作按钮（覆盖在内容区上方） -->
-    <div class="bottom-actions">
-      <div class="action-row">
-        <button class="action-btn">不感兴趣</button>
-        <button class="action-btn primary" id="openImmerseBtn">查看详情</button>
-      </div>
-      <div class="swipe-hint">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-        上滑继续看视频
-      </div>
-    </div>
   </div>
 
   <!-- 底部 Tab 栏 -->
@@ -367,6 +309,8 @@
     <button class="tab-item">消息</button>
     <button class="tab-item">我</button>
   </nav>
+
+  <div class="tab-bar-bottom-spacer"></div>
 
   <div class="home-indicator"></div>
 </div>
@@ -417,19 +361,6 @@
     if (!tab) return;
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-  });
-
-  // "查看详情" 触发 iframe 内的沉浸式模式
-  document.getElementById('openImmerseBtn').addEventListener('click', () => {
-    try {
-      const innerDoc = frame.contentDocument || frame.contentWindow?.document;
-      const btn = innerDoc?.getElementById('openImmerse');
-      if (btn) {
-        btn.click();
-      }
-    } catch (err) {
-      console.warn('无法访问 iframe 内的沉浸式按钮:', err);
-    }
   });
 
   // 底部 Tab 切换

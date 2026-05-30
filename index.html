@@ -7,7 +7,7 @@
 <title>背单词 · 短视频流</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lobster&family=Pacifico&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -162,6 +162,7 @@
     background: rgba(13, 22, 32, 0.16);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+    width: 100%;
   }
   .card {
     width: 100%;
@@ -190,7 +191,7 @@
     align-items: stretch;
   }
   .card-main {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
     display: flex; flex-direction: column;
   }
@@ -240,7 +241,10 @@
     flex: 0 0 28px;
     margin-left: 0;
   }
-  .word-line .learned-btn { margin-left: auto; }
+  .word-line .learned-btn {
+    flex: 0 0 28px;
+    margin-left: auto;
+  }
   .speak-btn:active { transform: scale(0.88); }
   .speak-btn svg { display: block; }
 
@@ -360,8 +364,116 @@
   .empty .text { font-size: 13px; }
 
   footer {
-    text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px;
-    padding: 8px 0 calc(100px + env(safe-area-inset-bottom));
+    color: rgba(255, 255, 255, 0.5); font-size: 11px;
+    padding: 12px 16px calc(30px + env(safe-area-inset-bottom));
+  }
+  /* 底部操作按钮区域（迁自 douyin_frame.html） */
+  .bottom-actions {
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* 三段式横向滑动控件（仅切换 main 单词集，不展示卡片内容） */
+  .card-pager {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pager-swipe {
+    position: absolute;
+    inset: 0;
+    touch-action: pan-y;
+    cursor: grab;
+    z-index: 1;
+  }
+  .pager-swipe:active { cursor: grabbing; }
+  .pager-bars { position: relative; z-index: 2; }
+  .pager-bars {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  .pager-bars > button {
+    width: 22px;
+    height: 3px;
+    border: none;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.3);
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.2s, width 0.2s;
+  }
+  .pager-bars > button.active {
+    background: #fff;
+    width: 32px;
+  }
+  .bottom-actions > * { pointer-events: auto; }
+  .action-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+  .action-btn {
+    flex: 1;
+    height: 42px;
+    border-radius: 21px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: transform 0.15s, background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .action-btn svg {
+    flex: 0 0 auto;
+    display: block;
+    opacity: 0.9;
+  }
+  .action-btn.primary {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.16),
+      0 8px 22px rgba(0,0,0,0.16);
+  }
+  .action-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+  .action-btn.primary:hover { background: rgba(255, 255, 255, 0.2); }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn:disabled {
+    opacity: 0.65;
+    cursor: default;
+  }
+  .swipe-hint {
+    position: absolute;
+    left: 50%;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    animation: footer-swipe-bob 1.6s ease-in-out infinite;
+  }
+  @keyframes footer-swipe-bob {
+    0%, 100% { transform: translate(-50%, 0); opacity: 0.7; }
+    50% { transform: translate(-50%, -3px); opacity: 1; }
   }
 
   .toast {
@@ -532,7 +644,34 @@
 
 <main class="feed" id="feed"></main>
 
-<footer id="footer">— 点击右上角进入沉浸式滑动 —</footer>
+<footer id="footer">
+  <div class="bottom-actions">
+    <div class="card-pager" id="cardPager">
+      <div class="pager-swipe" id="cardPagerSwipe" aria-label="左右滑动切换单词集"></div>
+      <div class="pager-bars" id="cardPagerBars"></div>
+    </div>
+    <div class="action-row">
+      <button class="action-btn" id="notInterestedBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span>不感兴趣</span>
+      </button>
+      <button class="action-btn primary" id="viewDetailBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="M13 6l6 6-6 6"></path>
+        </svg>
+        <span>查看详情</span>
+      </button>
+    </div>
+    <div class="swipe-hint">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      上滑继续看视频
+    </div>
+  </div>
+</footer>
 
 <div class="toast" id="toast"></div>
 
@@ -568,7 +707,48 @@
       source: "Vox", timestamp: "0:48",
       cover: "https://picsum.photos/seed/ubi/160",
       url: "https://www.youtube.com/results?search_query=ubiquitous" },
-
+    { word: "resilience", level: "CET6", phonetic: "/rɪˈzɪliəns/", meaning: "n. 韧性，复原力",
+      en: "She showed remarkable resilience after the setback.",
+      cn: "经历挫折后，她展现出非凡的韧性。",
+      videoTitle: "The secret to building resilience",
+      source: "TED · Lucy Hone", timestamp: "5:30",
+      cover: "https://picsum.photos/seed/res/160",
+      url: "https://www.youtube.com/results?search_query=resilience+ted" },
+    { word: "nostalgia", level: "CET6", phonetic: "/nɒˈstældʒə/", meaning: "n. 怀旧，乡愁",
+      en: "Old photos always fill me with nostalgia.",
+      cn: "老照片总是让我充满怀旧之情。",
+      videoTitle: "Why nostalgia is good for you",
+      source: "BBC Ideas", timestamp: "1:25",
+      cover: "https://picsum.photos/seed/nos/160",
+      url: "https://www.youtube.com/results?search_query=nostalgia" },
+    { word: "procrastinate", level: "CET6", phonetic: "/prəʊˈkræstɪneɪt/", meaning: "v. 拖延",
+      en: "I tend to procrastinate when the task feels overwhelming.",
+      cn: "当任务令人不知所措时，我倾向于拖延。",
+      videoTitle: "Inside the mind of a master procrastinator",
+      source: "TED · Tim Urban", timestamp: "3:18",
+      cover: "https://picsum.photos/seed/pro/160",
+      url: "https://www.youtube.com/results?search_query=procrastinate+ted" },
+    { word: "meticulous", level: "IELTS", phonetic: "/məˈtɪkjələs/", meaning: "adj. 一丝不苟的",
+      en: "She is meticulous about every detail of her work.",
+      cn: "她对工作的每一个细节都一丝不苟。",
+      videoTitle: "The meticulous craft of Japanese carpentry",
+      source: "Great Big Story", timestamp: "2:40",
+      cover: "https://picsum.photos/seed/met/160",
+      url: "https://www.youtube.com/results?search_query=meticulous" },
+    { word: "vibrant", level: "CET4", phonetic: "/ˈvaɪbrənt/", meaning: "adj. 充满活力的，鲜艳的",
+      en: "Tokyo is a vibrant city full of energy.",
+      cn: "东京是一座充满活力的城市。",
+      videoTitle: "A walk through vibrant Tokyo streets",
+      source: "Walk Travel", timestamp: "0:30",
+      cover: "https://picsum.photos/seed/vib/160",
+      url: "https://www.youtube.com/results?search_query=vibrant+tokyo" },
+    { word: "curious", level: "CET4", phonetic: "/ˈkjʊəriəs/", meaning: "adj. 好奇的",
+      en: "Children are naturally curious about the world.",
+      cn: "孩子们对世界天生充满好奇。",
+      videoTitle: "Why curious minds learn faster",
+      source: "TED-Ed", timestamp: "2:00",
+      cover: "https://picsum.photos/seed/cur/160",
+      url: "https://www.youtube.com/results?search_query=curious+kids" }
   ];
 
   const PALETTES = [
@@ -638,6 +818,11 @@
     toastTimer = setTimeout(() => t.classList.remove('show'), 1400);
   }
 
+  const PAGER_SIZE = 3;
+  let pagerIdx = 0;
+  function getPagerTotal(len) {
+    return Math.max(1, Math.ceil(len / PAGER_SIZE));
+  }
   function getFiltered() {
     let list = WORDS;
     const levelFilters = ['CET4','CET6','IELTS'];
@@ -645,6 +830,11 @@
     else if (currentFilter === 'learned') list = list.filter(w => state.learned.includes(w.word));
     else if (currentFilter === 'unlearned') list = list.filter(w => !state.learned.includes(w.word));
     else if (levelFilters.includes(currentFilter)) list = list.filter(w => w.level === currentFilter);
+    // pager 分页：每页固定显示 PAGER_SIZE 个，根据 pagerIdx 取对应页
+    const total = getPagerTotal(list.length);
+    if (pagerIdx >= total) pagerIdx = total - 1;
+    const start = pagerIdx * PAGER_SIZE;
+    list = list.slice(start, start + PAGER_SIZE);
     if (currentSearch) {
       const q = currentSearch.toLowerCase();
       list = list.filter(w =>
@@ -854,6 +1044,58 @@
 
   document.getElementById('openImmerse')?.addEventListener('click', openImmerse);
   document.getElementById('closeImmerse')?.addEventListener('click', closeImmerse);
+  document.getElementById('viewDetailBtn')?.addEventListener('click', openImmerse);
+  document.getElementById('notInterestedBtn')?.addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    const label = btn.querySelector('span');
+    const old = label.textContent;
+    label.textContent = '已减少类似推荐';
+    btn.disabled = true;
+    setTimeout(() => { label.textContent = old; btn.disabled = false; }, 1500);
+  });
+
+  // 三段横向滑动控件（切换 main 单词集；同时支持手势滑动和点击横条）
+  (function initCardPager() {
+    const swipe = document.getElementById('cardPagerSwipe');
+    const bars = document.getElementById('cardPagerBars');
+    if (!swipe || !bars) return;
+    const PAGER_TOTAL = getPagerTotal(WORDS.length);
+    bars.innerHTML = Array.from({ length: PAGER_TOTAL }, (_, i) =>
+      `<button data-idx="${i}" class="${i === pagerIdx ? 'active' : ''}" aria-label="第 ${i + 1} 段"></button>`
+    ).join('');
+    const barEls = Array.from(bars.children);
+    function setIdx(i) {
+      const next = Math.max(0, Math.min(PAGER_TOTAL - 1, i));
+      if (next === pagerIdx) return;
+      pagerIdx = next;
+      barEls.forEach((b, idx) => b.classList.toggle('active', idx === pagerIdx));
+      render();
+      const main = document.querySelector('main.feed');
+      if (main) main.scrollTop = 0;
+    }
+
+    // 点击横条切换
+    bars.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-idx]');
+      if (!b) return;
+      setIdx(+b.dataset.idx);
+    });
+
+    // 手势：鼠标拖动 + 触摸滑动，超过阈值则切换
+    const THRESHOLD = 40;
+    let startX = null;
+    function onStart(x) { startX = x; }
+    function onEnd(x) {
+      if (startX === null) return;
+      const dx = x - startX;
+      startX = null;
+      if (Math.abs(dx) < THRESHOLD) return;
+      setIdx(pagerIdx + (dx < 0 ? 1 : -1));
+    }
+    swipe.addEventListener('pointerdown', e => { onStart(e.clientX); swipe.setPointerCapture(e.pointerId); });
+    swipe.addEventListener('pointerup',   e => onEnd(e.clientX));
+    swipe.addEventListener('pointercancel', () => { startX = null; });
+  })();
 
   document.getElementById('immerseScroll').addEventListener('click', e => {
     const reveal = e.target.closest('[data-act="reveal"]');
