@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="DriftLearn 流光知 logo" width="200" />
+</p>
+
 # DriftLearn 流光知
 
 **让走神的时间，也能学到一点。**
