@@ -818,6 +818,11 @@
     // 初始化：渲染列表并绑定手势/点击事件
     function init() {
       seedStarredWords();
+      // 从 URL 读取 page 参数，恢复上次离开时的词库分类（用于从 word-card 返回时还原 starred / unknown 状态）
+      try {
+        const initPage = new URL(location.href).searchParams.get('page');
+        if (initPage && pageOrder.indexOf(initPage) >= 0) activePage = initPage;
+      } catch (_) {}
       render();
       requestAnimationFrame(() => {
         document.body.classList.remove("is-loading");
@@ -866,21 +871,27 @@
         if (event.target.closest("a")) return;
         const card = event.target.closest(".card[data-word]");
         if (!card) return;
-        location.href = "word-card.html?word=" + encodeURIComponent(card.dataset.word);
+        location.href = "word-card.html?word=" + encodeURIComponent(card.dataset.word) + "&page=" + encodeURIComponent(activePage);
       });
     }
 
     function toggleFullscreen() {
       // 进入沉浸式背单词页：先请求全屏（必须在用户手势内同步发起），再跳转到 word-card.html
       requestPageFullscreen();
+      // 把当前激活页面写进 URL，这样从 word-card.html 用 history.back() 返回时能恢复到原来的词库分类
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set('page', activePage);
+        history.replaceState(null, '', u.toString());
+      } catch (_) {}
       // 把当前激活页面里展示的第一个单词作为初始词传给 word-card.html
       let firstWord = '';
       const activePanel = document.querySelector('.panel.active .word-list .card .word');
       if (activePanel) firstWord = activePanel.textContent.trim();
-      const url = firstWord
-        ? 'word-card.html?word=' + encodeURIComponent(firstWord)
-        : 'word-card.html';
-      location.href = url;
+      const params = new URLSearchParams();
+      if (firstWord) params.set('word', firstWord);
+      params.set('page', activePage);
+      location.href = 'word-card.html?' + params.toString();
     }
 
     function requestPageFullscreen() {

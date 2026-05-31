@@ -974,18 +974,16 @@
       if (idx < list.length - 1) { idx++; render(); playSwitchAnim(1); }
     });
     el.btnBack.addEventListener('click', () => {
-      // 退出沉浸式背单词页：先退出全屏，再回到 word_swipe_library.html
+      // 退出沉浸式背单词页：先退出全屏，再回到 word_swipe_library.html，并带上原来的词库分类参数
       const doc = document;
       const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
       if (doc.fullscreenElement || doc.webkitFullscreenElement) {
         try { exit && exit.call(doc); } catch (_) {}
       }
-      const ref = document.referrer;
-      if (ref && /word_swipe_library\.html/i.test(ref) && history.length > 1) {
-        history.back();
-      } else {
-        location.href = 'word_swipe_library.html';
-      }
+      let page = '';
+      try { page = new URL(location.href).searchParams.get('page') || ''; } catch (_) {}
+      const target = page ? 'word_swipe_library.html?page=' + encodeURIComponent(page) : 'word_swipe_library.html';
+      location.href = target;
     });
     el.btnSound.addEventListener('click', () => {
       // 播放声波扩散动画
