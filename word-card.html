@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3d8eb9">
+<title>Word Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600;1,700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Root variables ── */
+  :root {
+    --bg: #3d8eb9;           /* 图片主色 */
+    --bg-dark: #2f7ba8;      /* 略深，用于卡片 */
+    --white: #ffffff;
+    --white-60: rgba(255,255,255,0.60);
+    --white-25: rgba(255,255,255,0.25);
+    --white-18: rgba(255,255,255,0.18);
+    --white-12: rgba(255,255,255,0.12);
+    --highlight-bg: rgba(255,255,255,0.22); /* 例句高亮块 */
+    --tag-border: rgba(255,255,255,0.55);
+    --video-bg: rgba(20,50,75,0.62);
+    --fab-bg: rgba(20,50,75,0.55);
+    --next-bg: rgba(255,255,255,0.15);
+    --next-border: rgba(255,255,255,0.30);
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'Noto Sans SC', sans-serif;
+  }
+
+  /* ── Page shell ── */
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* ── Full-viewport page ── */
+  .card-page {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+  }
+
+  /* ════════════════════════════════
+     顶栏
+  ════════════════════════════════ */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(28px + env(safe-area-inset-top)) 24px 16px;
+    flex-shrink: 0;
+  }
+
+  .btn-back {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--white-25);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-back:hover { background: var(--white-18); }
+  .btn-back svg {
+    width: 20px; height: 20px;
+    stroke: var(--white); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .progress-pill {
+    background: var(--white-25);
+    border-radius: 24px;
+    padding: 8px 20px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: 0.3px;
+  }
+
+  /* ════════════════════════════════
+     单词区
+  ════════════════════════════════ */
+  .word-section {
+    padding: 20px 28px 0;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .word-main {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1.05;
+    color: var(--white);
+    letter-spacing: -2px;
+    white-space: nowrap;
+    overflow: visible;
+  }
+
+  .phonetic-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .phonetic {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--white-60);
+    letter-spacing: 0.3px;
+  }
+
+  .btn-sound {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+  }
+  .btn-sound:hover { opacity: 1; }
+  .btn-sound svg {
+    width: 24px; height: 24px;
+    stroke: var(--white); fill: none;
+    stroke-width: 1.8; stroke-linecap: round;
+  }
+
+  /* ════════════════════════════════
+     分割线
+  ════════════════════════════════ */
+  .divider {
+    height: 1px;
+    background: var(--white-18);
+    margin: 22px 28px 0;
+    flex-shrink: 0;
+  }
+
+  /* ════════════════════════════════
+     释义区
+  ════════════════════════════════ */
+  .def-section {
+    padding: 22px 28px 0;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .definition {
+    font-family: var(--font-body);
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--white);
+    line-height: 1.55;
+  }
+
+  .tag-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  .tag {
+    display: inline-block;
+    border: 1.5px solid var(--tag-border);
+    border-radius: 8px;
+    padding: 5px 16px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+
+  /* ════════════════════════════════
+     例句区
+  ════════════════════════════════ */
+  .example-section {
+    padding: 28px 28px 0;
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .example-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: clamp(118px, 23vh, 220px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.24) transparent;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-right: 6px;
+  }
+  .example-list::-webkit-scrollbar { width: 4px; }
+  .example-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.24);
+    border-radius: 4px;
+  }
+  .example-list::-webkit-scrollbar-track { background: transparent; }
+  .example-list:not(.scrollable) {
+    overflow: hidden;
+    padding-right: 0;
+  }
+
+  .example-item {
+    padding: 0;
+    margin: 0;
+  }
+  .example-item + .example-item {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .example-text {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--white);
+    line-height: 1.75;
+    margin: 0;
+  }
+  .example-cn {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.55);
+    font-weight: 300;
+  }
+
+  .highlight {
+    background: var(--highlight-bg);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ════════════════════════════════
+     弹性撑开区域
+  ════════════════════════════════ */
+  .spacer { flex: 1; min-height: 48px; }
+
+  /* ════════════════════════════════
+     底部区域 wrapper（视频卡 + FAB）
+  ════════════════════════════════ */
+  .bottom-area {
+    position: relative;
+    padding: 0 16px 16px;
+    flex-shrink: 0;
+  }
+
+  /* ── 视频列表（多视频可滚动） ── */
+  .video-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-right: 58px;            /* 留出右侧 FAB 的空间 */
+    max-height: calc(82px * 2 + 8px); /* 大约 2 行；超过则滚动 */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.18) transparent;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+  }
+  .video-list::-webkit-scrollbar { width: 4px; }
+  .video-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.18);
+    border-radius: 4px;
+  }
+  .video-list::-webkit-scrollbar-track { background: transparent; }
+  .video-list:not(.scrollable) { overflow: hidden; }
+
+  /* ── 视频卡片 ── */
+  .video-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--video-bg);
+    border-radius: 16px;
+    padding: 12px 16px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .video-card:hover { background: rgba(20,50,75,0.75); }
+
+  .video-thumb {
+    width: 58px;
+    height: 58px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #1a3a50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .video-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* 用 CSS 模拟沙漏缩略图占位 */
+  .video-thumb-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #c97b3a 0%, #7b4a1a 60%, #3a2a10 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .video-thumb-placeholder svg {
+    width: 28px; height: 28px;
+    fill: rgba(255,255,255,0.6);
+  }
+
+  .video-info { flex: 1; min-width: 0; }
+
+  .video-title {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.35;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .video-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .yt-badge {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: #e00;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .yt-badge svg { width: 10px; height: 10px; fill: #fff; }
+
+  .video-src {
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--white-60);
+    white-space: nowrap;
+  }
+
+  /* ── 右侧 FAB 按钮组 ── */
+  .fab-group {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fab {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--fab-bg);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.85);
+    transition: background 0.35s ease, color 0.35s ease, transform 0.25s ease, box-shadow 0.35s ease;
+  }
+  .fab:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+  }
+  .fab svg {
+    width: 20px; height: 20px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0.9;
+    transition: fill 0.35s ease, stroke 0.35s ease, opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  /* ════════════════════════════════
+     Next 按钮条
+  ════════════════════════════════ */
+  .next-bar {
+    padding: 12px 20px calc(28px + env(safe-area-inset-bottom));
+    flex-shrink: 0;
+    border-top: 1px solid var(--white-12);
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-next {
+    flex: 1;
+    padding: 15px;
+    border-radius: 18px;
+    background: var(--next-bg);
+    border: 1px solid var(--next-border);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-next:hover { background: rgba(255,255,255,0.22); }
+  .btn-next:active { transform: scale(0.98); }
+  .btn-next:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-next:disabled:hover { background: var(--next-bg); }
+
+  /* ════════════════════════════════
+     动画
+  ════════════════════════════════ */
+  /* 整页进入动画 */
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-page { animation: pageFadeIn 0.45s ease both; }
+
+  /* 顺序入场，给每个区块加 stagger */
+  @keyframes blockUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .topbar         { animation: blockUp 0.45s ease both; animation-delay: 0.05s; }
+  .word-section   { animation: blockUp 0.55s ease both; animation-delay: 0.12s; }
+  .divider        { animation: blockUp 0.4s  ease both; animation-delay: 0.18s; transform-origin: center; }
+  .def-section    { animation: blockUp 0.5s  ease both; animation-delay: 0.22s; }
+  .example-section{ animation: blockUp 0.55s ease both; animation-delay: 0.30s; }
+  .bottom-area    { animation: blockUp 0.55s ease both; animation-delay: 0.38s; }
+  .next-bar       { animation: blockUp 0.5s  ease both; animation-delay: 0.46s; }
+
+  /* 单词主体：在淡入之外加一个轻微的字距放大 */
+  @keyframes wordPop {
+    0%   { opacity: 0; transform: translateY(10px) scale(0.96); letter-spacing: 2px; }
+    60%  { opacity: 1; transform: translateY(0) scale(1.02);    letter-spacing: -1px; }
+    100% { opacity: 1; transform: translateY(0) scale(1);       letter-spacing: -2px; }
+  }
+  .word-main { animation: wordPop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.18s; }
+
+  /* 切词时复用：JS 给 .word-main 临时加 .switching 触发重播 */
+  .word-main.switching { animation: wordPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  /* 例句高亮：呼吸感发光 */
+  @keyframes highlightGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); background: var(--highlight-bg); }
+    50%      { box-shadow: 0 0 14px 2px rgba(255,255,255,0.25); background: rgba(255,255,255,0.32); }
+  }
+  .highlight {
+    animation: highlightGlow 2.6s ease-in-out infinite;
+    animation-delay: 0.7s;
+  }
+
+  /* 喇叭按钮按下时的"声波扩散"动画 */
+  @keyframes soundPulse {
+    0%   { transform: scale(1); opacity: 1; }
+    50%  { transform: scale(1.18); opacity: 0.85; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .btn-sound.playing svg { animation: soundPulse 0.6s ease both; }
+
+  /* FAB 按钮：进入时弹跳；激活时金黄/翠绿色 */
+  @keyframes fabPop {
+    0%   { opacity: 0; transform: translateX(20px) scale(0.7); }
+    60%  { opacity: 1; transform: translateX(-3px) scale(1.08); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  .fab-group .fab { animation: fabPop 0.55s cubic-bezier(0.22, 1.5, 0.6, 1) both; }
+  .fab-group .fab:nth-child(1) { animation-delay: 0.42s; }
+  .fab-group .fab:nth-child(2) { animation-delay: 0.50s; }
+  /* 收藏按钮激活：温暖的暖橘色调 */
+  .fab#btnStar.active {
+    background: rgba(255, 196, 122, 0.18);
+    color: #ffd9a8;
+    box-shadow: 0 4px 18px rgba(255, 184, 108, 0.18);
+  }
+  .fab#btnStar.active svg {
+    fill: #ffd9a8;
+    stroke: #ffd9a8;
+    opacity: 1;
+  }
+
+  /* 已学会激活：柔和的薄荷绿 */
+  .fab#btnLearned.active {
+    background: rgba(168, 226, 200, 0.18);
+    color: #d2f1e0;
+    box-shadow: 0 4px 18px rgba(140, 220, 180, 0.16);
+  }
+  .fab#btnLearned.active svg {
+    stroke: #d2f1e0;
+    opacity: 1;
+  }
+
+  /* 收藏按钮点击反馈：柔和的呼吸式放大 */
+  @keyframes softBloom {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .fab.bursting { animation: softBloom 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+  .fab.bursting svg { transform: scale(1.05); }
+
+  /* 视频卡：悬停轻微抬升；点击进入时滑入 */
+  @keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .video-list { animation: cardSlideIn 0.5s ease both; animation-delay: 0.36s; }
+  .video-card { transition: transform 0.25s ease, background 0.25s ease; }
+  .video-card:hover { transform: translateY(-2px); }
+  .video-card:active { transform: scale(0.985); }
+
+  /* Next / Previous 按钮 hover/press 反馈 */
+  .btn-next {
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  }
+  .btn-next:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+
+  /* 切词时让内容区做横向滑动 */
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .card-content-anim.slide-next { animation: slideInRight 0.35s ease both; }
+  .card-content-anim.slide-prev { animation: slideInLeft 0.35s ease both; }
+
+  /* 减少动效：尊重系统偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001s !important;
+      animation-delay: 0s !important;
+      transition-duration: 0.001s !important;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="card-page">
+
+  <!-- ① 顶栏 -->
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="返回">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="progress-pill" id="progressPill">1 / 1</div>
+  </div>
+
+  <!-- ② 单词 + 音标 -->
+  <div class="word-section">
+    <div class="word-main" id="wordMain">serendipity</div>
+    <div class="phonetic-row">
+      <span class="phonetic" id="wordPhonetic">/ˌserənˈdɪpəti/</span>
+      <button class="btn-sound" id="btnSound" aria-label="播放发音">
+        <svg viewBox="0 0 24 24">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ③ 分割线 -->
+  <div class="divider"></div>
+
+  <!-- ④ 释义 + 标签 -->
+  <div class="def-section">
+    <div class="definition" id="wordMeaning">n. 意外发现美好事物的能力</div>
+    <div class="tag-row">
+      <span class="tag" id="wordLevel">IELTS</span>
+    </div>
+  </div>
+
+  <!-- ⑤ 例句 -->
+  <div class="example-section">
+    <div class="example-list" id="exampleList"></div>
+  </div>
+
+  <!-- ⑥ 弹性空白 -->
+  <div class="spacer"></div>
+
+  <!-- ⑦ 视频卡 + FAB -->
+  <div class="bottom-area">
+    <div class="video-list" id="videoList"></div>
+
+    <!-- 右侧浮动按钮 -->
+    <div class="fab-group">
+      <button class="fab" id="btnStar" aria-label="收藏">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </button>
+      <button class="fab" id="btnLearned" aria-label="已学会" title="已学会">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M8 12.2l2.5 2.5L16.5 9"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ⑧ Next 按钮 -->
+  <div class="next-bar">
+    <button class="btn-next" id="btnPrev">Previous</button>
+    <button class="btn-next" id="btnNext">Next</button>
+  </div>
+
+</div>
+
+<script src="word_library.js"></script>
+<script src="words.js"></script>
+<script>
+  (function () {
+    function mergeWordDatabases(baseList, overlayList) {
+      const merged = (baseList || []).map(item => ({ ...item }));
+      (overlayList || []).forEach((item) => {
+        if (!item || !item.word) return;
+        const index = merged.findIndex(word => word.word.toLowerCase() === item.word.toLowerCase());
+        if (index >= 0) {
+          const base = merged[index];
+          merged[index] = {
+            ...base,
+            ...item,
+            examples: Array.isArray(item.examples) && item.examples.length ? item.examples : base.examples,
+            example: item.example || base.example
+          };
+        } else {
+          merged.push({ ...item });
+        }
+      });
+      return merged;
+    }
+    let list = mergeWordDatabases(window.WORDS || [], window.LOCAL_WORD_LIBRARY || []);
+    function loadVideoDerivedWords() {
+      try {
+        const raw = sessionStorage.getItem('douyinDemo/videoDerivedWords');
+        const derived = JSON.parse(raw || '[]');
+        return Array.isArray(derived) ? derived : [];
+      } catch (_) {
+        return [];
+      }
+    }
+    function mergeVideoDerivedWords(sourceList) {
+      const merged = sourceList.slice();
+      loadVideoDerivedWords().reverse().forEach((item) => {
+        if (!item || !item.word) return;
+        const index = merged.findIndex((word) => word.word.toLowerCase() === item.word.toLowerCase());
+        if (index >= 0) merged[index] = { ...merged[index], ...item };
+        else merged.unshift(item);
+      });
+      return merged;
+    }
+    list = mergeVideoDerivedWords(list);
+
+    const params = new URLSearchParams(location.search);
+    const paramWord = params.get('word');
+    function param(name) {
+      const value = params.get(name);
+      return value === null ? '' : value.trim();
+    }
+    function buildParamWord() {
+      if (!paramWord) return null;
+      return {
+        word: paramWord,
+        level: param('level'),
+        phonetic: param('phonetic'),
+        meaning: param('meaning') || param('definition'),
+        en: param('en') || param('example') || '',
+        cn: param('cn') || '',
+        videoTitle: param('videoTitle'),
+        source: param('source'),
+        cover: param('cover'),
+        url: param('url'),
+        videoIndex: param('videoIndex')
+      };
+    }
+    const paramWordData = buildParamWord();
+    if (paramWordData) {
+      const found = list.findIndex(w => w.word.toLowerCase() === paramWord.toLowerCase());
+      if (found >= 0) {
+        list[found] = { ...list[found], ...Object.fromEntries(Object.entries(paramWordData).filter(([, value]) => value)) };
+      } else {
+        list.unshift({
+          ...paramWordData,
+          level: paramWordData.level || 'Custom',
+          meaning: paramWordData.meaning || '自定义单词'
+        });
+      }
+    }
+    if (!list.length) return;
+    let idx = 0;
+    if (paramWord) {
+      const found = list.findIndex(w => w.word.toLowerCase() === paramWord.toLowerCase());
+      if (found >= 0) idx = found;
+    } else if (params.get('index')) {
+      idx = Math.max(0, Math.min(list.length - 1, parseInt(params.get('index'), 10) || 0));
+    }
+
+    const STORE_KEY = 'wordVideoApp/v3';
+    let state = { starred: [], learned: [] };
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      state.starred = Array.isArray(raw.starred) ? raw.starred : [];
+      state.learned = Array.isArray(raw.learned) ? raw.learned : [];
+    } catch (_) {}
+    function saveState() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    const el = {
+      pill: document.getElementById('progressPill'),
+      word: document.getElementById('wordMain'),
+      phonetic: document.getElementById('wordPhonetic'),
+      meaning: document.getElementById('wordMeaning'),
+      level: document.getElementById('wordLevel'),
+      exampleList: document.getElementById('exampleList'),
+      videoList: document.getElementById('videoList'),
+      btnPrev: document.getElementById('btnPrev'),
+      btnNext: document.getElementById('btnNext'),
+      btnBack: document.getElementById('btnBack'),
+      btnSound: document.getElementById('btnSound'),
+      btnStar: document.getElementById('btnStar'),
+      btnLearned: document.getElementById('btnLearned')
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function highlightSentence(en, word) {
+      const safe = escapeHtml(en);
+      const re = new RegExp('(' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      return safe.replace(re, '<span class="highlight">$1</span>');
+    }
+    function getOriginVideo() {
+      try {
+        const raw = sessionStorage.getItem('douyinDemo/wordOriginVideo');
+        if (!raw) return null;
+        const video = JSON.parse(raw);
+        if (!video || (!video.title && !video.source && !video.cover)) return null;
+        return video;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function fitWordToLine() {
+      const maxSize = 64;
+      const minSize = 34;
+      const section = el.word.closest('.word-section');
+      const available = section.clientWidth;
+      el.word.style.fontSize = maxSize + 'px';
+      el.word.style.letterSpacing = '-2px';
+      let size = maxSize;
+      while (size > minSize && el.word.scrollWidth > available) {
+        size -= 2;
+        el.word.style.fontSize = size + 'px';
+      }
+      if (el.word.scrollWidth > available) {
+        el.word.style.letterSpacing = '-3px';
+      }
+    }
+
+    function getVideoTarget(video) {
+      const rawVideoIndex = video?.videoIndex;
+      const hasVideoIndex = rawVideoIndex !== undefined && rawVideoIndex !== null && String(rawVideoIndex).trim() !== '';
+      const videoIndex = Number(rawVideoIndex);
+      if (hasVideoIndex && Number.isFinite(videoIndex)) {
+        return {
+          href: 'douyin_frame.html?videoIndex=' + encodeURIComponent(videoIndex),
+          local: true
+        };
+      }
+      return {
+        href: video?.url || '',
+        local: false
+      };
+    }
+
+    function buildVideoList(item) {
+      // 收集所有可能的视频来源：item.videos 数组 > 单个 item.video > item 字段
+      let videos = [];
+      if (Array.isArray(item.videos) && item.videos.length) {
+        videos = item.videos.slice();
+      } else if (item.video) {
+        videos = [item.video];
+      } else if (item.videoTitle || item.source || item.url) {
+        videos = [{
+          title: item.videoTitle,
+          source: item.source,
+          url: item.url,
+          cover: item.cover,
+          videoIndex: item.videoIndex
+        }];
+      }
+      // 非 fromVideo 时，把"来源视频"插入到第一项
+      if (!item.fromVideo) {
+        const origin = getOriginVideo();
+        if (origin) {
+          const exists = videos.some(v => v && (
+            (v.url && origin.url && v.url === origin.url) ||
+            (v.title && origin.title && v.title === origin.title)
+          ));
+          if (!exists) videos.unshift(origin);
+        }
+      }
+      return videos.filter(Boolean);
+    }
+
+    function renderVideoCard(vid, word) {
+      const target = getVideoTarget(vid);
+      const title = escapeHtml(vid.title || word || '');
+      const source = vid.source
+        ? escapeHtml(vid.source) + (target.href ? ' · 点击观看' : ' · 视频出处')
+        : (target.href ? '点击观看' : '视频出处');
+      const thumb = vid.cover
+        ? `<img src="${escapeHtml(vid.cover)}" alt="">`
+        : `<div class="video-thumb-placeholder">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 2h14M5 22h14M6 2v4l5 6-5 6v4M18 2v4l-5 6 5 6v4" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>`;
+      const tag = target.href ? 'a' : 'div';
+      const attrs = target.href
+        ? `href="${escapeHtml(target.href)}" target="${target.local ? '_self' : '_blank'}" rel="noopener"`
+        : '';
+      return `
+        <${tag} class="video-card" ${attrs}>
+          <div class="video-thumb">${thumb}</div>
+          <div class="video-info">
+            <div class="video-title">${title}</div>
+            <div class="video-meta">
+              <div class="yt-badge">
+                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <span class="video-src">${source}</span>
+            </div>
+          </div>
+        </${tag}>
+      `;
+    }
+
+    function buildExampleList(item) {
+      // 兼容三种数据：item.examples[] 数组 / item.example 单对象 / 平铺字段
+      let examples = [];
+      if (Array.isArray(item.examples) && item.examples.length) {
+        examples = item.examples.slice();
+      } else if (item.example) {
+        examples = [item.example];
+      } else if (item.en || item.cn) {
+        examples = [{ en: item.en || '', cn: item.cn || '' }];
+      }
+      return examples.filter(ex => ex && (ex.en || ex.cn));
+    }
+
+    function renderExampleItem(ex, word) {
+      const en = highlightSentence(ex.en || '', word);
+      const cn = ex.cn ? `<div class="example-cn">${escapeHtml(ex.cn)}</div>` : '';
+      return `
+        <div class="example-item">
+          <p class="example-text">${en}</p>
+          ${cn}
+        </div>
+      `;
+    }
+
+    function render() {
+      const item = list[idx];
+      el.pill.textContent = (idx + 1) + ' / ' + list.length;
+      el.word.textContent = item.word;
+      el.phonetic.textContent = item.phonetic || '';
+      el.meaning.textContent = item.meaning || '';
+      el.level.textContent = item.level || '';
+
+      // 渲染所有例句（数量与 examples 完全一致，直接展开显示）
+      const examples = buildExampleList(item);
+      el.exampleList.innerHTML = (examples.length ? examples : [{ en: '', cn: '' }])
+        .map(ex => renderExampleItem(ex, item.word))
+        .join('');
+      el.exampleList.scrollTop = 0;
+      requestAnimationFrame(() => {
+        const overflow = el.exampleList.scrollHeight - el.exampleList.clientHeight > 1;
+        el.exampleList.classList.toggle('scrollable', overflow);
+      });
+
+      // 渲染视频列表（多视频可滚动）
+      const videos = buildVideoList(item);
+      const html = (videos.length ? videos : [{ title: item.word, source: '' }])
+        .map(v => renderVideoCard(v, item.word))
+        .join('');
+      el.videoList.innerHTML = html;
+      el.videoList.scrollTop = 0;
+      requestAnimationFrame(() => {
+        const overflow = el.videoList.scrollHeight - el.videoList.clientHeight > 1;
+        el.videoList.classList.toggle('scrollable', overflow);
+      });
+
+      el.btnPrev.disabled = idx <= 0;
+      el.btnNext.disabled = idx >= list.length - 1;
+      el.btnStar.classList.toggle('active', state.starred.includes(item.word));
+      el.btnLearned.classList.toggle('active', state.learned.includes(item.word));
+      requestAnimationFrame(fitWordToLine);
+    }
+
+    function playSwitchAnim(dir) {
+      // 单词主体重播 wordPop
+      el.word.classList.remove('switching');
+      void el.word.offsetWidth; // 触发 reflow 重启动画
+      el.word.classList.add('switching');
+
+      // 中部内容（释义/例句/视频卡）做横向滑入
+      const targets = [
+        document.querySelector('.def-section'),
+        document.querySelector('.example-section'),
+        document.querySelector('.video-list')
+      ];
+      const cls = dir > 0 ? 'slide-next' : 'slide-prev';
+      targets.forEach(t => {
+        if (!t) return;
+        t.classList.remove('card-content-anim', 'slide-next', 'slide-prev');
+        void t.offsetWidth;
+        t.classList.add('card-content-anim', cls);
+      });
+    }
+
+    el.btnPrev.addEventListener('click', () => {
+      if (idx > 0) { idx--; render(); playSwitchAnim(-1); }
+    });
+    el.btnNext.addEventListener('click', () => {
+      if (idx < list.length - 1) { idx++; render(); playSwitchAnim(1); }
+    });
+    el.btnBack.addEventListener('click', () => {
+      // 退出沉浸式背单词页：先退出全屏，再回到 word_swipe_library.html
+      const doc = document;
+      const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+      if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+        try { exit && exit.call(doc); } catch (_) {}
+      }
+      const ref = document.referrer;
+      if (ref && /word_swipe_library\.html/i.test(ref) && history.length > 1) {
+        history.back();
+      } else {
+        location.href = 'word_swipe_library.html';
+      }
+    });
+    el.btnSound.addEventListener('click', () => {
+      // 播放声波扩散动画
+      el.btnSound.classList.remove('playing');
+      void el.btnSound.offsetWidth;
+      el.btnSound.classList.add('playing');
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(list[idx].word);
+      u.lang = 'en-US'; u.rate = 0.9;
+      speechSynthesis.speak(u);
+    });
+    function burst(btn) {
+      btn.classList.remove('bursting');
+      void btn.offsetWidth;
+      btn.classList.add('bursting');
+    }
+    el.btnStar.addEventListener('click', () => {
+      const w = list[idx].word;
+      const i = state.starred.indexOf(w);
+      if (i >= 0) state.starred.splice(i, 1); else state.starred.push(w);
+      saveState(); render();
+      burst(el.btnStar);
+    });
+    el.btnLearned.addEventListener('click', () => {
+      const w = list[idx].word;
+      const i = state.learned.indexOf(w);
+      if (i >= 0) state.learned.splice(i, 1); else state.learned.push(w);
+      saveState(); render();
+      burst(el.btnLearned);
+    });
+    window.addEventListener('resize', () => requestAnimationFrame(fitWordToLine));
+
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerTracking = false;
+    let leavingToVideo = false;
+    function goFirstVideoPage() {
+      if (leavingToVideo) return;
+      leavingToVideo = true;
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'douyinDanci:loopToFirstVideo' }, window.location.origin);
+        setTimeout(() => { leavingToVideo = false; }, 800);
+        return;
+      }
+      location.href = 'douyin_frame.html?firstVideo=1';
+    }
+    function shouldLoopToVideo(dx, dy) {
+      return Math.abs(dy) > 70 && Math.abs(dy) > Math.abs(dx) * 1.15;
+    }
+    function isControlOrScrollTarget(target) {
+      return target.closest('button, a, input, textarea, select, .example-list, .video-list');
+    }
+    document.addEventListener('touchstart', (event) => {
+      if (isControlOrScrollTarget(event.target)) return;
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) return;
+      swipeStartX = touch.clientX;
+      swipeStartY = touch.clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', (event) => {
+      if (isControlOrScrollTarget(event.target)) return;
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.clientX - swipeStartX;
+      const dy = touch.clientY - swipeStartY;
+      if (shouldLoopToVideo(dx, dy)) {
+        goFirstVideoPage();
+      }
+    }, { passive: true });
+    document.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'touch') return;
+      if (isControlOrScrollTarget(event.target)) return;
+      pointerTracking = true;
+      pointerStartX = event.clientX;
+      pointerStartY = event.clientY;
+    });
+    document.addEventListener('pointerup', (event) => {
+      if (!pointerTracking) return;
+      pointerTracking = false;
+      const dx = event.clientX - pointerStartX;
+      const dy = event.clientY - pointerStartY;
+      if (shouldLoopToVideo(dx, dy)) {
+        goFirstVideoPage();
+      }
+    });
+    document.addEventListener('wheel', (event) => {
+      if (isControlOrScrollTarget(event.target)) return;
+      if (event.deltaY > 50) {
+        goFirstVideoPage();
+      }
+    }, { passive: true });
+
+    render();
+  })();
+</script>
+
+</body>
+</html>

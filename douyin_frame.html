@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#000000" />
-<title>抖音框架</title>
+<title>似曾相识 · 刷视频学单词</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
   html, body {
@@ -128,7 +128,16 @@
     overflow: hidden;
     background: #111;
   }
-  /* iframe 插槽 - 用于内嵌外部 HTML */
+  /* iframe 插槽 - 作为视频 feed 的最后一张 slide，支持上下滑动切换 */
+  .iframe-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    background: #000;
+    overflow: hidden;
+  }
   #contentFrame {
     position: absolute;
     inset: 0;
@@ -137,6 +146,203 @@
     border: 0;
     background: transparent;
   }
+  /* iframe 顶部的"下滑返回视频"把手（iframe 会拦截手势，所以需要外层 handle） */
+  .back-handle {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 36px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%);
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .back-handle .grip {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.55);
+    margin-right: 6px;
+  }
+
+  /* ============ 视频 Feed（抖音风格垂直滑动） ============ */
+  #videoFeed {
+    position: absolute;
+    inset: 0;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: #000;
+  }
+  #videoFeed::-webkit-scrollbar { display: none; }
+  #videoFeed.hide { display: none; }
+
+  .video-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow: hidden;
+    background: #000;
+  }
+  .video-slide .cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+  .video-slide .shade {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 55%;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .video-info {
+    position: absolute;
+    left: 14px;
+    right: 86px;
+    bottom: 8px;
+    z-index: 3;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+  .video-info .sender {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+  .video-info .title {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    color: rgba(255,255,255,0.95);
+    word-break: break-word;
+  }
+  .video-side {
+    position: absolute;
+    right: 10px;
+    bottom: 15pt;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    color: #fff;
+  }
+  .side-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+  .side-btn .icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.45));
+  }
+  .side-avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: linear-gradient(135deg, #fe2c55, #25f4ee);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .side-avatar::after {
+    content: "+";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fe2c55;
+    color: #fff;
+    font-size: 14px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  .play-overlay svg {
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  }
+
+  /* 末尾过渡 slide：进入背单词 */
+  .transition-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    background: linear-gradient(160deg, #1a2820 0%, #0a1410 70%, #000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    gap: 14px;
+    padding: 0 32px;
+    text-align: center;
+  }
+  .transition-slide .t-title {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffd66e, #fe2c55);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .transition-slide .t-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+  }
+  .transition-slide .t-spinner {
+    margin-top: 10px;
+    width: 28px; height: 28px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* 内容覆盖层（默认隐藏，仅当未加载 iframe 时显示占位） */
   .content-placeholder {
     position: absolute;
@@ -165,11 +371,63 @@
     font-size: 12px;
   }
 
+  /* ============ 底部操作按钮区域 ============ */
+  .bottom-actions {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    padding: 12px 16px 10px;
+    z-index: 10;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+  }
+  .bottom-actions > * { pointer-events: auto; }
+  .action-row {
+    display: flex;
+    gap: 12px;
+  }
+  .action-btn {
+    flex: 1;
+    height: 46px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+  }
+  .action-btn.primary {
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    border-color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .swipe-hint {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    animation: bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(-3px); opacity: 1; }
+  }
+
   /* ============ 底部 Tab 栏 ============ */
   .tab-bar {
     flex-shrink: 0;
-    height: calc(50px + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(50px + 15pt + env(safe-area-inset-bottom));
+    padding-bottom: calc(15pt + env(safe-area-inset-bottom));
     background: #000;
     display: flex;
     align-items: center;
@@ -192,11 +450,6 @@
     border: none;
   }
   .tab-item.active { color: #fff; font-weight: 700; }
-  .tab-bar-bottom-spacer {
-    flex-shrink: 0;
-    height: 50px;
-    background: #000;
-  }
   .tab-item.center {
     flex: 0 0 56px;
   }
@@ -290,13 +543,14 @@
        3. 直接修改 iframe src 属性
   -->
   <div class="content-stage">
-    <iframe id="contentFrame" name="contentFrame" title="内容区" src="index.html" allowfullscreen></iframe>
+    <!-- 抖音风格短视频 Feed（最后一张 slide 是背单词页 iframe） -->
+    <div id="videoFeed"></div>
+
     <div class="content-placeholder" id="placeholder" style="display:none;">
       <div class="ph-title">内容嵌入区</div>
       <div>通过 <code>?src=xxx.html</code> 或 JS 接口加载内容</div>
       <div style="margin-top:6px;">例如：<code>window.loadContent('demo.html')</code></div>
     </div>
-
   </div>
 
   <!-- 底部 Tab 栏 -->
@@ -310,50 +564,382 @@
     <button class="tab-item">我</button>
   </nav>
 
-  <div class="tab-bar-bottom-spacer"></div>
-
   <div class="home-indicator"></div>
 </div>
 
 <script>
-  // ============ 内容嵌入接口 ============
-  const frame = document.getElementById('contentFrame');
-  const placeholder = document.getElementById('placeholder');
+  // ============ 视频数据（来源：videos.md + videos/ 目录封面图） ============
+  const VIDEOS = [
+    { sender: '综艺挑战汇', title: '世界最最神秘最坚固的末日核地堡 价值超过10亿美元的世界最昂贵核地堡。从1美元的地堡到最贵地堡应有尽有 #野兽先生 #mrbeast #末日地堡', cover: 'videos/image_世界最最神秘最坚固的末日核地堡 ..._0.png' },
+    { sender: '豫州小吏', title: '《西游记》原著到底有多恐怖，竟然连影视剧都不敢翻拍？ #四大名著 #西游记 #青年创作者成长计划', cover: 'videos/image_《西游记》原著到底有多恐怖，竟然..._0.png' },
+    { sender: '大豪夫妇', title: '听说昂贵的澳龙在新西兰泛滥了，帅小伙带女友火速前往。。 #潘婷胜肽泡弹发膜', cover: 'videos/image_听说昂贵的澳龙在新西兰泛滥了，帅..._0.png' },
+    { sender: '煎饼果仔（张问初）', title: '《寻找格桑先生》预告 #ENEMY 主创最新作品。（不是电影宣发！老师们注意辨别！） #夏天煎饼', cover: 'videos/image_《寻找格桑先生》预告..._0.png' },
+    { sender: '张天琪', title: '刚子买了我就嫁！你们看看可行不？ #主打就一个宠粉 #日常vlog #大平层', cover: 'videos/image_刚子买了我就嫁！你们看看可行不？..._0.png' },
+    { sender: '肥龙和老西', title: '别 欺 负 天 津 小 学 生 #搞笑配音 #一本正经飚方言 #万万想不到 #天津话 #搞笑', cover: 'videos/image_别 欺 负 天 津 小 学 生 ..._0.png' },
+    { sender: '张森的下班料理', title: '店里剩了一条三文鱼没卖出去，厨师长晚上偷偷开个小灶尝尝味道 #深夜美食 #三文鱼', cover: 'videos/image_店里剩了一条三文鱼没卖出去，厨师..._0.png' },
+    { sender: '船长MC', title: '海上流浪记极限生存 一口气看完 这是我见到过最硬核的生存！ #我的世界 #MC生存日记 #打开MC的100种方式 #游戏内容风向标 #MC', cover: 'videos/image_海上流浪记极限生存 一口气看完 ..._0.png' },
+    { sender: '秀才探影', title: '《老狐狸》一个老头培养一个小孩成为了狐狸的故事 #老狐狸 #韩剧推荐 #抖音精选计划', cover: 'videos/image_《老狐狸》一个老头培养一个小孩成..._0.png' },
+    { sender: '玖七97（三角洲教学）', title: '四头四甲单枪M7，13杀清图天才少年，6分钟让你爱上威龙 #三角洲行动 #三角洲s8蝶变时刻新赛季 #三角洲行动攻略 #威龙 #航天基地', cover: 'videos/image_四头四甲单枪M7，13杀清图天才..._0.png' }
+  ];
 
-  /**
-   * 加载外部 HTML 文件到内容区
-   * @param {string} url - HTML 文件路径或 URL
-   */
+  // 随机化的点赞/评论/收藏数（让 UI 更真实）
+  function rndCount() {
+    const n = Math.floor(Math.random() * 900) + 50;
+    return n > 99 ? (Math.random() < 0.5 ? n + 'w' : (n / 10).toFixed(1) + 'w') : n + '';
+  }
+
+  // ============ 渲染视频 Feed（无限循环：到达 iframe 末尾时追加新一轮） ============
+  const feed = document.getElementById('videoFeed');
+  const videoFeed = feed;
+
+  function makeVideoSlide(v, i) {
+    const slide = document.createElement('section');
+    slide.className = 'video-slide';
+    slide.dataset.index = String(i);
+    slide.dataset.sender = v.sender || '';
+    slide.dataset.title = v.title || '';
+    slide.dataset.cover = v.cover || '';
+    const initial = (v.sender || '?').slice(0, 1);
+    slide.innerHTML = `
+      <img class="cover" src="${encodeURI(v.cover)}" alt="${v.sender}" loading="${i < 2 ? 'eager' : 'lazy'}" />
+      <div class="play-overlay">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="shade"></div>
+      <div class="video-side">
+        <div class="side-avatar">${initial}</div>
+        <button class="side-btn" type="button">
+          <span class="icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.2C.9 8.4 2.7 4 6.5 4c2 0 3.4 1 4.5 2.3C12.1 5 13.5 4 15.5 4 19.3 4 21.1 8.4 19.5 11.8 17 16.5 12 21 12 21z"/></svg>
+          </span>
+          <span>${rndCount()}</span>
+        </button>
+        <button class="side-btn" type="button">
+          <span class="icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+          </span>
+          <span>${rndCount()}</span>
+        </button>
+        <button class="side-btn" type="button">
+          <span class="icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+          </span>
+          <span>${rndCount()}</span>
+        </button>
+        <button class="side-btn" type="button">
+          <span class="icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+          </span>
+          <span>分享</span>
+        </button>
+      </div>
+      <div class="video-info">
+        <div class="sender">@${v.sender}</div>
+        <div class="title">${v.title}</div>
+      </div>
+    `;
+    return slide;
+  }
+
+  function makeIframeSlide() {
+    const slide = document.createElement('section');
+    slide.className = 'iframe-slide';
+    slide.innerHTML = `
+      <div class="back-handle" title="下拉返回视频">
+      </div>
+      <iframe class="content-frame" title="内容区" src="about:blank" allowfullscreen></iframe>
+    `;
+    // iframe 占满父容器（替代原先 #contentFrame 的样式）
+    const ifr = slide.querySelector('iframe');
+    ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;';
+
+    const handle = slide.querySelector('.back-handle');
+    const goBack = () => {
+      const prev = slide.previousElementSibling;
+      if (prev) prev.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    handle.addEventListener('click', goBack);
+    let hStartY = 0;
+    handle.addEventListener('touchstart', (e) => { hStartY = e.touches[0].clientY; }, { passive: true });
+    handle.addEventListener('touchend', (e) => {
+      const dy = (e.changedTouches[0]?.clientY ?? hStartY) - hStartY;
+      if (dy > 20) goBack();
+    }, { passive: true });
+    return slide;
+  }
+
+  // IntersectionObserver：iframe 首次进入视口时再加载 index.html
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting || e.intersectionRatio < 0.6) return;
+      if (e.target.classList.contains('iframe-slide')) {
+        const ifr = e.target.querySelector('iframe');
+        if (ifr && ifr.getAttribute('src') === 'about:blank') {
+          saveWordOriginVideo();
+          saveVideoDerivedWords();
+          ifr.src = 'index.html';
+        }
+      }
+    });
+  }, { root: videoFeed, threshold: [0.6] });
+
+  // 追加一轮：10 个视频 + 1 个 iframe slide。返回本轮第一个视频元素（用于平滑滚动定位）。
+  function appendCycle() {
+    const frag = document.createDocumentFragment();
+    let firstVideo = null;
+    VIDEOS.forEach((v, i) => {
+      const s = makeVideoSlide(v, i);
+      if (i === 0) firstVideo = s;
+      frag.appendChild(s);
+    });
+    const ifSlide = makeIframeSlide();
+    frag.appendChild(ifSlide);
+    feed.appendChild(frag);
+    // 监听新追加的 slide（仅 iframe slide 需要做懒加载）
+    io.observe(ifSlide);
+    return firstVideo;
+  }
+
+  appendCycle(); // 初始一轮
+
+  // ============ 监听 iframe（背单词页）触底向下滑动：回到第一个视频 ============
+  let loopCoolingDown = false;
+  function scrollToFirstVideo(behavior = 'smooth') {
+    const firstVideo = feed.querySelector('.video-slide');
+    if (firstVideo) {
+      firstVideo.scrollIntoView({ behavior, block: 'start' });
+    } else {
+      videoFeed.scrollTo({ top: 0, behavior });
+    }
+  }
+  function scrollToVideoIndex(index, behavior = 'smooth') {
+    const safeIndex = Number(index);
+    if (!Number.isFinite(safeIndex) || !VIDEOS[safeIndex]) {
+      scrollToFirstVideo(behavior);
+      return;
+    }
+    const target = feed.querySelector(`.video-slide[data-index="${safeIndex}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior, block: 'start' });
+    } else {
+      scrollToFirstVideo(behavior);
+    }
+  }
+  function swapVideoWithWordPrevious(index) {
+    const safeIndex = Number(index);
+    if (!Number.isFinite(safeIndex) || !VIDEOS[safeIndex]) {
+      scrollToFirstVideo('smooth');
+      return;
+    }
+    const iframeSlide = firstIframeSlide?.();
+    const previousVideo = iframeSlide?.previousElementSibling;
+    const targetVideo = feed.querySelector(`.video-slide[data-index="${safeIndex}"]`);
+    if (!iframeSlide || !previousVideo || !targetVideo) {
+      scrollToVideoIndex(safeIndex, 'smooth');
+      return;
+    }
+    if (previousVideo !== targetVideo) {
+      const targetMarker = document.createTextNode('');
+      const previousMarker = document.createTextNode('');
+      feed.insertBefore(targetMarker, targetVideo);
+      feed.insertBefore(previousMarker, previousVideo);
+      feed.insertBefore(targetVideo, previousMarker);
+      feed.insertBefore(previousVideo, targetMarker);
+      targetMarker.remove();
+      previousMarker.remove();
+    }
+    saveWordOriginVideo();
+    targetVideo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function getWordOriginVideo() {
+    const iframeSlide = firstIframeSlide?.();
+    const previousVideo = iframeSlide?.previousElementSibling;
+    const index = Number(previousVideo?.dataset.index || 0);
+    const video = Number.isFinite(index) ? VIDEOS[index] : null;
+    if (!video) return null;
+    return {
+      title: video.title || '',
+      source: video.sender ? '@' + video.sender : '',
+      cover: video.cover || '',
+      url: '',
+      videoIndex: index
+    };
+  }
+  function saveWordOriginVideo() {
+    const originVideo = getWordOriginVideo();
+    if (!originVideo) return;
+    sessionStorage.setItem('douyinDemo/wordOriginVideo', JSON.stringify(originVideo));
+  }
+  function getRecentVideosBeforeWord(limit = 5) {
+    const iframeSlide = firstIframeSlide?.();
+    const result = [];
+    let node = iframeSlide?.previousElementSibling;
+    while (node && result.length < limit) {
+      if (node.classList?.contains('video-slide')) {
+        const index = Number(node.dataset.index || 0);
+        if (Number.isFinite(index) && VIDEOS[index]) {
+          result.unshift({ ...VIDEOS[index], videoIndex: index });
+        }
+      }
+      node = node.previousElementSibling;
+    }
+    return result;
+  }
+  const VIDEO_WORD_BANK = [
+    {
+      match: /天津|方言|搞笑/,
+      words: [
+        { word: 'dialect', level: 'CET6', phonetic: '/ˈdaɪəlekt/', meaning: 'n. 方言，地方话', en: 'The comedian used a local dialect to make the joke funnier.', cn: '这位喜剧演员使用地方方言，让笑话更有趣。' },
+        { word: 'humor', level: 'CET4', phonetic: '/ˈhjuːmər/', meaning: 'n. 幽默', en: 'Good humor can make an ordinary story memorable.', cn: '好的幽默能让普通故事变得难忘。' }
+      ]
+    },
+    {
+      match: /三文鱼|厨师|美食/,
+      words: [
+        { word: 'salmon', level: 'CET6', phonetic: '/ˈsæmən/', meaning: 'n. 三文鱼，鲑鱼', en: 'The chef prepared fresh salmon after closing the restaurant.', cn: '餐厅打烊后，厨师处理了新鲜三文鱼。' },
+        { word: 'leftover', level: 'CET6', phonetic: '/ˈleftoʊvər/', meaning: 'n. 剩余物；adj. 剩下的', en: 'He turned the leftover fish into a quiet late-night meal.', cn: '他把剩下的鱼做成了一顿安静的夜宵。' }
+      ]
+    },
+    {
+      match: /生存|流浪|MC|硬核/,
+      words: [
+        { word: 'survival', level: 'CET4', phonetic: '/sərˈvaɪvl/', meaning: 'n. 生存，存活', en: 'The player needed patience and courage for survival at sea.', cn: '玩家需要耐心和勇气才能在海上生存。' },
+        { word: 'hardcore', level: 'CET6', phonetic: '/ˈhɑːrdkɔːr/', meaning: 'adj. 硬核的，极端投入的', en: 'The hardcore challenge made every decision feel important.', cn: '这个硬核挑战让每个决定都显得很重要。' }
+      ]
+    },
+    {
+      match: /老狐狸|培养|故事/,
+      words: [
+        { word: 'mentor', level: 'CET6', phonetic: '/ˈmentɔːr/', meaning: 'n. 导师，良师', en: 'The old man became a quiet mentor to the young boy.', cn: '老人安静地成为了小男孩的导师。' },
+        { word: 'cunning', level: 'IELTS', phonetic: '/ˈkʌnɪŋ/', meaning: 'adj. 狡黠的，精明的', en: 'The story shows how cunning can be taught as a survival skill.', cn: '这个故事展示了狡黠也能成为一种生存技能。' }
+      ]
+    },
+    {
+      match: /三角洲|攻略|天才|威龙/,
+      words: [
+        { word: 'strategy', level: 'CET6', phonetic: '/ˈstrætədʒi/', meaning: 'n. 策略，战术', en: 'A clear strategy helped the player control the whole map.', cn: '清晰的策略帮助玩家掌控了整张地图。' },
+        { word: 'tactical', level: 'IELTS', phonetic: '/ˈtæktɪkl/', meaning: 'adj. 战术的，策略性的', en: 'The tactical move changed the result of the match.', cn: '这个战术动作改变了比赛结果。' }
+      ]
+    }
+  ];
+  const VIDEO_INDEX_WORD_BANK = {
+    1: { word: 'mythic', level: 'IELTS', phonetic: '/ˈmɪθɪk/', meaning: 'adj. 神话般的，传奇的', en: 'The old novel feels mythic because every adventure hides a warning.', cn: '这部老小说带着神话般的气质，因为每段冒险都藏着警示。' },
+    2: { word: 'abundant', level: 'CET6', phonetic: '/əˈbʌndənt/', meaning: 'adj. 大量的，丰富的', en: 'Lobsters became abundant along the quiet coast.', cn: '龙虾在这片安静的海岸变得十分丰富。' },
+    3: { word: 'preview', level: 'CET4', phonetic: '/ˈpriːvjuː/', meaning: 'n. 预告，预览', en: 'The preview gives the audience a glimpse of the new story.', cn: '预告让观众先看到这个新故事的一角。' },
+    4: { word: 'commitment', level: 'CET6', phonetic: '/kəˈmɪtmənt/', meaning: 'n. 承诺，投入', en: 'A big promise often tests real commitment.', cn: '一个重大的承诺往往会检验真正的投入。' }
+  };
+  function deriveWordsFromVideo(video) {
+    const text = `${video.sender || ''} ${video.title || ''}`;
+    const matched = VIDEO_WORD_BANK.find(group => group.match.test(text));
+    const indexedWord = VIDEO_INDEX_WORD_BANK[video.videoIndex];
+    const words = matched ? matched.words : (indexedWord ? [indexedWord] : []);
+    return words.map(item => ({
+      ...item,
+      videoTitle: video.title || item.word,
+      source: video.sender ? '@' + video.sender : '视频语料',
+      cover: video.cover || '',
+      url: '',
+      videoIndex: video.videoIndex,
+      fromVideo: true
+    }));
+  }
+  function saveVideoDerivedWords() {
+    const seenWords = new Set();
+    const seenVideos = new Set();
+    const derived = [];
+    getRecentVideosBeforeWord(9).forEach(video => {
+      deriveWordsFromVideo(video).forEach(item => {
+        if (derived.length >= 9) return;
+        const key = item.word.toLowerCase();
+        const videoKey = item.videoIndex === undefined || item.videoIndex === null ? key : String(item.videoIndex);
+        if (seenWords.has(key) || seenVideos.has(videoKey)) return;
+        seenWords.add(key);
+        seenVideos.add(videoKey);
+        derived.push(item);
+      });
+    });
+    sessionStorage.setItem('douyinDemo/videoDerivedWords', JSON.stringify(derived));
+  }
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'douyinDanci:loopToFirstVideo') {
+      if (loopCoolingDown) return;
+      loopCoolingDown = true;
+      scrollToFirstVideo('smooth');
+      setTimeout(() => { loopCoolingDown = false; }, 1000);
+      return;
+    }
+    if (e.data.type === 'douyin-demo:open-video') {
+      swapVideoWithWordPrevious(e.data.videoIndex);
+      return;
+    }
+    if (e.data.type === 'douyin-demo:navigate' && e.data.target === 'word_swipe_library.html') {
+      saveWordOriginVideo();
+      saveVideoDerivedWords();
+      sessionStorage.setItem('douyinDemo/returnToWordPage', '1');
+      try {
+        history.replaceState(history.state, '', 'douyin_frame.html?wordPage=1');
+      } catch (_) {}
+      window.location.href = e.data.target;
+    }
+  });
+
+  // ============ 原有内容嵌入接口（保留；作用于首个 iframe slide） ============
+  const placeholder = document.getElementById('placeholder');
+  const firstIframe = () => feed.querySelector('.iframe-slide iframe');
+  const firstIframeSlide = () => feed.querySelector('.iframe-slide');
+
   window.loadContent = function (url) {
     if (!url) return;
     placeholder.style.display = 'none';
-    frame.src = url;
+    const ifr = firstIframe();
+    if (ifr) ifr.src = url;
+    firstIframeSlide()?.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
-  /**
-   * 直接将 HTML 字符串注入到内容区
-   * @param {string} html - 完整的 HTML 文档字符串
-   */
   window.setContentHTML = function (html) {
     placeholder.style.display = 'none';
     const blob = new Blob([html], { type: 'text/html' });
-    frame.src = URL.createObjectURL(blob);
+    const ifr = firstIframe();
+    if (ifr) ifr.src = URL.createObjectURL(blob);
+    firstIframeSlide()?.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
-  /**
-   * 清空内容区，显示占位
-   */
   window.clearContent = function () {
-    frame.src = 'about:blank';
+    const ifr = firstIframe();
+    if (ifr) ifr.src = 'about:blank';
+    videoFeed.scrollTo({ top: 0, behavior: 'auto' });
     placeholder.style.display = '';
   };
+  function scrollToWordPage(behavior = 'auto') {
+    const ifr = firstIframe();
+    if (ifr && ifr.getAttribute('src') === 'about:blank') {
+      saveWordOriginVideo();
+      saveVideoDerivedWords();
+      ifr.src = 'index.html';
+    }
+    firstIframeSlide()?.scrollIntoView({ behavior, block: 'start' });
+  }
 
-  // 启动：从 URL 参数 ?src= 自动加载
+  // 启动：从 URL 参数 ?src= 自动加载（跳过视频 Feed 直接进入指定内容）
   const params = new URLSearchParams(location.search);
   const initSrc = params.get('src');
   if (initSrc) {
     window.loadContent(initSrc);
   }
+  if (params.get('wordPage') === '1' || sessionStorage.getItem('douyinDemo/returnToWordPage') === '1') {
+    sessionStorage.removeItem('douyinDemo/returnToWordPage');
+    requestAnimationFrame(() => scrollToWordPage('auto'));
+  } else if (params.has('videoIndex')) {
+    requestAnimationFrame(() => scrollToVideoIndex(params.get('videoIndex'), 'auto'));
+  } else if (params.get('firstVideo') === '1') {
+    requestAnimationFrame(() => scrollToFirstVideo('auto'));
+  }
+  window.addEventListener('pageshow', () => {
+    if (sessionStorage.getItem('douyinDemo/returnToWordPage') !== '1') return;
+    sessionStorage.removeItem('douyinDemo/returnToWordPage');
+    requestAnimationFrame(() => scrollToWordPage('auto'));
+  });
 
   // 顶部 Tab 切换
   document.getElementById('navTabs').addEventListener('click', e => {

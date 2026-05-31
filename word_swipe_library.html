@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1620" />
+  <title>单词库 · 似曾相识</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Pacifico&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #0d1620;
+      --line: rgba(255, 255, 255, 0.1);
+      --glass: rgba(8, 16, 25, 0.58);
+      --glass-strong: rgba(9, 17, 27, 0.82);
+      --soft: rgba(255, 255, 255, 0.7);
+      --faint: rgba(255, 255, 255, 0.45);
+      --shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+      --accent: linear-gradient(135deg, #8b7bff 0%, #51d0ff 100%);
+    }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg) url('bkgrd.jpg') center/cover fixed no-repeat;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(circle at top right, rgba(122, 92, 255, 0.22), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(0, 210, 255, 0.18), transparent 26%),
+        linear-gradient(180deg, rgba(8, 14, 21, 0.36) 0%, rgba(8, 14, 21, 0.76) 50%, rgba(8, 14, 21, 0.92) 100%);
+    }
+    body {
+      min-height: 100vh;
+      padding: 0;
+    }
+    body.is-loading .phone-shell {
+      opacity: 0;
+      visibility: hidden;
+    }
+    body.is-ready .phone-shell {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* 全视口页面外壳（去除手机壳模拟） */
+    .phone-shell {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: transparent;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.16s ease;
+    }
+    .top-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: linear-gradient(180deg, rgba(9, 16, 25, 0.92) 0%, rgba(9, 16, 25, 0.72) 78%, rgba(9, 16, 25, 0) 100%);
+    }
+    .top {
+      position: relative;
+      z-index: 5;
+      padding: calc(16px + env(safe-area-inset-top)) 14px 12px;
+      padding-top: 10px;
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .back-btn {
+      padding: 4px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+      opacity: 0.9;
+    }
+    .back-btn:hover { color: #fff; opacity: 1; }
+    .back-btn:active { transform: scale(0.88) translateX(-2px); }
+    .back-btn svg { display: block; }
+    .fullscreen-btn {
+      padding: 4px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+      opacity: 0.9;
+    }
+    .fullscreen-btn:hover { color: #fff; opacity: 1; }
+    .fullscreen-btn:active { transform: scale(0.88); }
+    .fullscreen-btn svg { display: block; }
+    .swipe-hint {
+      flex-shrink: 0;
+      color: rgba(255,255,255,0.58);
+      font-size: 10px;
+      text-align: right;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    /* 顶部三个词库切换按钮 */
+    .tabbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--soft);
+      border-radius: 14px;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tab.active {
+      color: #fff;
+      border-color: rgba(139, 123, 255, 0.45);
+      background: linear-gradient(135deg, rgba(139, 123, 255, 0.28), rgba(81, 208, 255, 0.12));
+      box-shadow: 0 10px 24px rgba(66, 84, 186, 0.28), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .tab:active {
+      transform: scale(0.98);
+    }
+    .search-wrap {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .search-wrap svg {
+      color: rgba(255,255,255,0.62);
+      flex-shrink: 0;
+    }
+    .search-wrap input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 13px;
+    }
+    .search-wrap input::placeholder { color: rgba(255, 255, 255, 0.42); }
+    /* 顶部统计信息 */
+    .stats {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .stat {
+      padding: 8px 8px 10px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+    .stat.active {
+      border-color: rgba(139,123,255,0.32);
+      background: linear-gradient(180deg, rgba(139,123,255,0.18), rgba(81,208,255,0.08));
+      transform: translateY(-1px);
+    }
+    .stat-label {
+      color: var(--faint);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+    }
+    .stat-value {
+      margin-top: 4px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    /* 页面主体：上下滚动，内部用左右手势切库 */
+    .viewport {
+      width: 100%;
+      padding-bottom: calc(30px + env(safe-area-inset-bottom));
+      touch-action: pan-y;
+    }
+    .panel {
+      display: none;
+      width: 100%;
+      padding: 4px 10px 0;
+    }
+    .panel.active { display: block; }
+    .panel-inner {
+      width: 100%;
+      margin: 0 auto;
+    }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(109, 164, 255, 0.24);
+    }
+    .panel-title h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .panel-title span {
+      color: var(--faint);
+      font-size: 10px;
+    }
+    /* 单词列表改成更紧凑的网格模式，尽量一屏显示更多 */
+    .word-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow:
+        0 8px 18px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255,255,255,0.14);
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      cursor: pointer;
+    }
+    .card:active {
+      transform: scale(0.98);
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      background: transparent;
+    }
+    .card.learned { opacity: 0.72; }
+    .card-inner { padding: 7px 8px 7px 10px; }
+    .word {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.08;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+      color: rgba(255,255,255,0.98);
+    }
+    .word-cn {
+      margin-top: 2px;
+      font-size: 10px;
+      line-height: 1.25;
+      color: rgba(255, 255, 255, 0.72);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .card-videos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .card-video-link {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      min-height: 20px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 9px;
+      line-height: 1;
+      text-decoration: none;
+    }
+    .card-video-link:active {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .empty {
+      padding: 42px 16px;
+      border-radius: 18px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--soft);
+    }
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .empty-desc {
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(14px);
+      min-width: 120px;
+      max-width: calc(100vw - 32px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      color: #0a0a0f;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      z-index: 30;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 380px) {
+      .word-list { grid-template-columns: 1fr; }
+    }
+    /* 平板模式：放宽容器、增加列数、让头部和卡片比例更协调 */
+    @media (min-width: 768px) {
+      .top {
+        padding-left: 18px;
+        padding-right: 18px;
+        padding-bottom: 14px;
+      }
+      .tabbar,
+      .stats {
+        gap: 10px;
+      }
+      .tab {
+        padding: 12px 10px;
+        font-size: 13px;
+        border-radius: 16px;
+      }
+      .search-wrap {
+        padding: 12px 14px;
+        border-radius: 16px;
+      }
+      .search-wrap input {
+        font-size: 14px;
+      }
+      .stat {
+        padding: 10px 10px 12px;
+        border-radius: 16px;
+      }
+      .stat-label {
+        font-size: 11px;
+      }
+      .stat-value {
+        font-size: 24px;
+      }
+      .panel {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .panel-title {
+        margin-bottom: 10px;
+      }
+      .panel-title h2 {
+        font-size: 16px;
+      }
+      .panel-title span {
+        font-size: 11px;
+      }
+      .word-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        border-radius: 14px;
+      }
+      .card-inner {
+        padding: 10px 12px 10px 14px;
+      }
+      .word {
+        font-size: 16px;
+      }
+      .word-cn {
+        margin-top: 4px;
+        font-size: 11px;
+      }
+    }
+    /* 更大平板横屏：再多一列，避免页面显得空 */
+    @media (min-width: 1024px) {
+      .word-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body class="is-loading">
+  <div class="phone-shell">
+  <div class="top-wrap">
+  <header class="top">
+    <div class="brand-row">
+      <button class="back-btn" id="backBtn" type="button" aria-label="返回" title="返回">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="开始" title="开始">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="7 4 21 12 7 20 7 4"></polygon>
+        </svg>
+      </button>
+    </div>
+    <div class="tabbar" id="tabbar">
+      <button class="tab active" data-page="all" type="button">全部单词</button>
+      <button class="tab" data-page="starred" type="button">收藏单词</button>
+      <button class="tab" data-page="unknown" type="button">不认识单词</button>
+    </div>
+    <label class="search-wrap" aria-label="搜索单词">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="searchInput" type="search" placeholder="搜索单词、释义、例句" />
+    </label>
+    <section class="stats" aria-label="词库统计">
+      <div class="stat active" data-stat="all">
+        <div class="stat-label">全部单词</div>
+        <div class="stat-value" id="statAll">0</div>
+      </div>
+      <div class="stat" data-stat="starred">
+        <div class="stat-label">已收藏</div>
+        <div class="stat-value" id="statStarred">0</div>
+      </div>
+      <div class="stat" data-stat="unknown">
+        <div class="stat-label">未认识</div>
+        <div class="stat-value" id="statUnknown">0</div>
+      </div>
+    </section>
+  </header>
+  </div>
+
+  <main class="viewport" id="viewport">
+    <section class="panel active" data-page="all">
+      <div class="panel-inner">
+        <div class="panel-title">
+          <div class="panel-heading">
+            <span class="panel-badge"></span>
+            <h2>全部单词库</h2>
+          </div>
+          <span id="countAll">0 个</span>
+        </div>
+        <div class="word-list" id="listAll"></div>
+      </div>
+    </section>
+    <section class="panel" data-page="starred">
+      <div class="panel-inner">
+        <div class="panel-title">
+          <div class="panel-heading">
+            <span class="panel-badge"></span>
+            <h2>收藏单词库</h2>
+          </div>
+          <span id="countStarred">0 个</span>
+        </div>
+        <div class="word-list" id="listStarred"></div>
+      </div>
+    </section>
+    <section class="panel" data-page="unknown">
+      <div class="panel-inner">
+        <div class="panel-title">
+          <div class="panel-heading">
+            <span class="panel-badge"></span>
+            <h2>不认识单词库</h2>
+          </div>
+          <span id="countUnknown">0 个</span>
+        </div>
+        <div class="word-list" id="listUnknown"></div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="word_library.js"></script>
+  <script>
+    // 单词源数据
+    let WORDS = window.LOCAL_WORD_LIBRARY || [
+      {
+        word: "serendipity",
+        level: "IELTS",
+        phonetic: "/ˌserənˈdɪpəti/",
+        meaning: "n. 意外发现美好事物的能力",
+        en: "Meeting you here was pure serendipity.",
+        cn: "在这里遇见你完全是意外的惊喜。"
+      },
+      {
+        word: "ephemeral",
+        level: "IELTS",
+        phonetic: "/ɪˈfemərəl/",
+        meaning: "adj. 短暂的，转瞬即逝的",
+        en: "Fame in the digital age is ephemeral.",
+        cn: "数字时代的名声是转瞬即逝的。"
+      },
+      {
+        word: "ubiquitous",
+        level: "CET6",
+        phonetic: "/juːˈbɪkwɪtəs/",
+        meaning: "adj. 无处不在的",
+        en: "Smartphones have become ubiquitous in modern life.",
+        cn: "智能手机在现代生活中已无处不在。"
+      },
+      {
+        word: "resilient",
+        level: "CET6",
+        phonetic: "/rɪˈzɪliənt/",
+        meaning: "adj. 有韧性的，能迅速恢复的",
+        en: "Children are often more resilient than adults expect.",
+        cn: "孩子往往比成年人想象中更有韧性。"
+      },
+      {
+        word: "meticulous",
+        level: "IELTS",
+        phonetic: "/məˈtɪkjələs/",
+        meaning: "adj. 一丝不苟的，极其仔细的",
+        en: "She is meticulous about every detail in her work.",
+        cn: "她对工作中的每一个细节都一丝不苟。"
+      },
+      {
+        word: "thrive",
+        level: "CET4",
+        phonetic: "/θraɪv/",
+        meaning: "v. 茁壮成长，蓬勃发展",
+        en: "Small businesses can thrive in a supportive community.",
+        cn: "小企业可以在支持性的社区中蓬勃发展。"
+      },
+      {
+        word: "humble",
+        level: "CET4",
+        phonetic: "/ˈhʌmbəl/",
+        meaning: "adj. 谦逊的，普通的",
+        en: "He remained humble despite his success.",
+        cn: "尽管取得了成功，他依然很谦逊。"
+      },
+      {
+        word: "vivid",
+        level: "CET4",
+        phonetic: "/ˈvɪvɪd/",
+        meaning: "adj. 生动的，鲜明的",
+        en: "Her story gave me a vivid picture of the city.",
+        cn: "她的讲述让我对这座城市有了生动的印象。"
+      },
+      {
+        word: "insight",
+        level: "CET6",
+        phonetic: "/ˈɪnsaɪt/",
+        meaning: "n. 洞察力，深刻见解",
+        en: "The book offers valuable insight into human behavior.",
+        cn: "这本书为人类行为提供了宝贵的洞察。"
+      },
+      {
+        word: "subtle",
+        level: "CET6",
+        phonetic: "/ˈsʌtəl/",
+        meaning: "adj. 微妙的，不易察觉的",
+        en: "There is a subtle difference between the two ideas.",
+        cn: "这两个观点之间有细微差别。"
+      },
+      {
+        word: "radiant",
+        level: "IELTS",
+        phonetic: "/ˈreɪdiənt/",
+        meaning: "adj. 容光焕发的，明亮的",
+        en: "She looked radiant in the morning sunlight.",
+        cn: "晨光中她显得容光焕发。"
+      },
+      {
+        word: "curious",
+        level: "CET4",
+        phonetic: "/ˈkjʊriəs/",
+        meaning: "adj. 好奇的",
+        en: "A curious mind learns faster and deeper.",
+        cn: "好奇的头脑学得更快也更深入。"
+      },
+      {
+        word: "clarity",
+        level: "IELTS",
+        phonetic: "/ˈklærəti/",
+        meaning: "n. 清晰，明晰",
+        en: "Good writing depends on clarity and structure.",
+        cn: "好的写作依赖于清晰和结构。"
+      },
+      {
+        word: "fragile",
+        level: "CET4",
+        phonetic: "/ˈfrædʒaɪl/",
+        meaning: "adj. 脆弱的，易碎的",
+        en: "Trust can be fragile when communication breaks down.",
+        cn: "当沟通出现问题时，信任会变得脆弱。"
+      },
+      {
+        word: "sincere",
+        level: "CET4",
+        phonetic: "/sɪnˈsɪr/",
+        meaning: "adj. 真诚的，诚挚的",
+        en: "She gave him a sincere apology.",
+        cn: "她向他作了真诚的道歉。"
+      },
+      {
+        word: "efficient",
+        level: "CET4",
+        phonetic: "/ɪˈfɪʃənt/",
+        meaning: "adj. 高效的，效率高的",
+        en: "A simple system is often more efficient.",
+        cn: "简单的系统往往更高效。"
+      },
+      {
+        word: "adapt",
+        level: "CET4",
+        phonetic: "/əˈdæpt/",
+        meaning: "v. 适应，调整",
+        en: "We must adapt quickly to changing conditions.",
+        cn: "我们必须迅速适应变化的环境。"
+      },
+      {
+        word: "graceful",
+        level: "IELTS",
+        phonetic: "/ˈɡreɪsfəl/",
+        meaning: "adj. 优雅的，从容的",
+        en: "The dancer made every movement look graceful.",
+        cn: "舞者让每一个动作都显得很优雅。"
+      },
+      {
+        word: "wander",
+        level: "CET4",
+        phonetic: "/ˈwɒndər/",
+        meaning: "v. 漫游，徘徊",
+        en: "We wandered through the old streets after dinner.",
+        cn: "晚饭后我们在老街里漫步。"
+      },
+      {
+        word: "brisk",
+        level: "IELTS",
+        phonetic: "/brɪsk/",
+        meaning: "adj. 轻快的， briskly 活泼迅速的",
+        en: "She took a brisk walk before breakfast.",
+        cn: "她在早餐前快步走了一圈。"
+      },
+      {
+        word: "anchor",
+        level: "CET6",
+        phonetic: "/ˈæŋkər/",
+        meaning: "n. 锚；v. 使固定，给以依靠",
+        en: "Family can be an emotional anchor in hard times.",
+        cn: "在困难时期，家人可以成为情感上的依靠。"
+      },
+      {
+        word: "spark",
+        level: "CET4",
+        phonetic: "/spɑːrk/",
+        meaning: "n. 火花；v. 激发，引发",
+        en: "A single question can spark a great idea.",
+        cn: "一个问题就可能激发出一个好点子。"
+      },
+      {
+        word: "steady",
+        level: "CET4",
+        phonetic: "/ˈstedi/",
+        meaning: "adj. 稳定的，平稳的",
+        en: "Progress is slow but steady.",
+        cn: "进步虽然缓慢，但很稳定。"
+      },
+      {
+        word: "glimpse",
+        level: "IELTS",
+        phonetic: "/ɡlɪmps/",
+        meaning: "n. 一瞥；v. 瞥见",
+        en: "We caught a glimpse of the mountains at sunset.",
+        cn: "日落时我们瞥见了群山。"
+      },
+      {
+        word: "nurture",
+        level: "IELTS",
+        phonetic: "/ˈnɜːrtʃər/",
+        meaning: "v. 培养，滋养",
+        en: "Teachers should nurture creativity in students.",
+        cn: "老师应该培养学生的创造力。"
+      }
+    ];
+
+    // 单词左侧竖条颜色
+    function loadVideoDerivedWords() {
+      try {
+        const raw = sessionStorage.getItem("douyinDemo/videoDerivedWords");
+        const derived = JSON.parse(raw || "[]");
+        return Array.isArray(derived) ? derived : [];
+      } catch (_) {
+        return [];
+      }
+    }
+    function mergeVideoDerivedWords(list) {
+      const merged = list.slice();
+      loadVideoDerivedWords().reverse().forEach((item) => {
+        if (!item || !item.word) return;
+        const index = merged.findIndex((word) => word.word.toLowerCase() === item.word.toLowerCase());
+        if (index >= 0) merged[index] = { ...merged[index], ...item };
+        else merged.unshift(item);
+      });
+      return merged;
+    }
+    WORDS = mergeVideoDerivedWords(WORDS);
+
+    const PALETTES = [
+      "linear-gradient(180deg, #62d0ff, #7a5cff)",
+      "linear-gradient(180deg, #68f0c1, #16a34a)",
+      "linear-gradient(180deg, #ffbf69, #ff7b54)",
+      "linear-gradient(180deg, #f58cff, #8f5cff)",
+      "linear-gradient(180deg, #ffe66d, #ff9f1c)",
+      "linear-gradient(180deg, #7bdff2, #4d96ff)"
+    ];
+
+    // 继续复用现有收藏/认识状态
+    const STORE_KEY = "wordVideoApp/v3";
+    const STARRED_SEED_KEY = "wordSwipeLibrary/starredSeededV1";
+    const DEFAULT_STARRED_WORDS = [
+      "serendipity",
+      "resilient",
+      "clarity",
+      "spark",
+      "nurture"
+    ];
+    const state = loadState();
+    const pageOrder = ["all", "starred", "unknown"];
+    const panelMeta = {
+      all: {
+        listId: "listAll",
+        countId: "countAll",
+        emptyTitle: "这里还没有单词",
+        emptyDesc: "当前单词库为空，补充数据后会自动显示在这里。"
+      },
+      starred: {
+        listId: "listStarred",
+        countId: "countStarred",
+        emptyTitle: "还没有收藏单词",
+        emptyDesc: "点击单词右侧的星标按钮，就会加入这里。"
+      },
+      unknown: {
+        listId: "listUnknown",
+        countId: "countUnknown",
+        emptyTitle: "目前都已认识",
+        emptyDesc: "把单词标记为未认识时，它们会出现在这里。"
+      }
+    };
+
+    let searchText = "";
+    let activePage = "all";
+    let toastTimer = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const phoneShell = document.querySelector(".phone-shell");
+    const viewport = document.getElementById("viewport");
+    const searchInput = document.getElementById("searchInput");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const toast = document.getElementById("toast");
+
+    init();
+
+    // 初始化：渲染列表并绑定手势/点击事件
+    function init() {
+      seedStarredWords();
+      render();
+      requestAnimationFrame(() => {
+        document.body.classList.remove("is-loading");
+        document.body.classList.add("is-ready");
+      });
+
+      document.getElementById("tabbar").addEventListener("click", (event) => {
+        const button = event.target.closest(".tab");
+        if (!button) return;
+        goToPage(button.dataset.page);
+      });
+
+      searchInput.addEventListener("input", (event) => {
+        searchText = event.target.value.trim().toLowerCase();
+        render();
+      });
+
+      if (fullscreenBtn) {
+        fullscreenBtn.addEventListener("click", toggleFullscreen);
+      }
+
+      const backBtn = document.getElementById("backBtn");
+      if (backBtn) {
+        backBtn.addEventListener("click", () => {
+          // 退出全屏后返回 douyin_frame.html
+          try {
+            const doc = document;
+            const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+            if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+              exit && exit.call(doc);
+            }
+          } catch (_) {}
+          const ref = document.referrer;
+          if (ref && /douyin_frame\.html/i.test(ref) && history.length > 1) {
+            history.back();
+          } else {
+            location.href = "douyin_frame.html?wordPage=1";
+          }
+        });
+      }
+
+      phoneShell.addEventListener("touchstart", handleTouchStart, { passive: true });
+      phoneShell.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+      viewport.addEventListener("click", (event) => {
+        if (event.target.closest("a")) return;
+        const card = event.target.closest(".card[data-word]");
+        if (!card) return;
+        location.href = "word-card.html?word=" + encodeURIComponent(card.dataset.word);
+      });
+    }
+
+    function toggleFullscreen() {
+      // 进入沉浸式背单词页：先请求全屏（必须在用户手势内同步发起），再跳转到 word-card.html
+      requestPageFullscreen();
+      // 把当前激活页面里展示的第一个单词作为初始词传给 word-card.html
+      let firstWord = '';
+      const activePanel = document.querySelector('.panel.active .word-list .card .word');
+      if (activePanel) firstWord = activePanel.textContent.trim();
+      const url = firstWord
+        ? 'word-card.html?word=' + encodeURIComponent(firstWord)
+        : 'word-card.html';
+      location.href = url;
+    }
+
+    function requestPageFullscreen() {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) {
+        try { req.call(el); } catch (_) {}
+      }
+    }
+
+    function goToPage(page) {
+      const index = pageOrder.indexOf(page);
+      if (index < 0) return;
+      activePage = page;
+      syncTabs();
+    }
+
+    // 记录触摸起点，用于判断左右切页
+    function handleTouchStart(event) {
+      if (event.target.closest("input, textarea")) return;
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) return;
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }
+
+    function handleTouchEnd(event) {
+      if (event.target.closest("input, textarea")) return;
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) return;
+
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+
+      if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+      const currentIndex = pageOrder.indexOf(activePage);
+      if (deltaX < 0 && currentIndex < pageOrder.length - 1) {
+        goToPage(pageOrder[currentIndex + 1]);
+      } else if (deltaX > 0 && currentIndex > 0) {
+        goToPage(pageOrder[currentIndex - 1]);
+      }
+    }
+
+    function syncTabs() {
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === activePage);
+      });
+      document.querySelectorAll(".stat").forEach((card) => {
+        card.classList.toggle("active", card.dataset.stat === activePage);
+      });
+      document.querySelectorAll(".panel").forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.page === activePage);
+      });
+    }
+
+    // 统一刷新顶部统计和三个词库面板
+    function render() {
+      document.getElementById("statAll").textContent = String(WORDS.length);
+      document.getElementById("statStarred").textContent = String(state.starred.length);
+      document.getElementById("statUnknown").textContent = String(getUnknownWords().length);
+
+      pageOrder.forEach((page) => {
+        const meta = panelMeta[page];
+        const list = getFilteredWords(page);
+        const container = document.getElementById(meta.listId);
+        const count = document.getElementById(meta.countId);
+        count.textContent = `${list.length} 个`;
+
+        if (!list.length) {
+          container.innerHTML = `
+            <section class="empty">
+              <div class="empty-title">${escapeHtml(meta.emptyTitle)}</div>
+              <div class="empty-desc">${escapeHtml(meta.emptyDesc)}</div>
+            </section>
+          `;
+          return;
+        }
+
+        container.innerHTML = list.map(renderCard).join("");
+      });
+
+      syncTabs();
+    }
+
+    // 根据词库类型和搜索词过滤内容
+    function getFilteredWords(page) {
+      let list = WORDS.slice();
+      if (page === "starred") {
+        list = list.filter((item) => state.starred.includes(item.word));
+      } else if (page === "unknown") {
+        list = getUnknownWords();
+      }
+
+      if (!searchText) return list;
+
+      return list.filter((item) => {
+        return [
+          item.word,
+          item.meaning,
+          item.en,
+          item.cn,
+          item.level,
+          item.phonetic,
+          item.videoTitle,
+          item.source
+        ].some((value) => String(value).toLowerCase().includes(searchText));
+      });
+    }
+
+    function getUnknownWords() {
+      return WORDS.filter((item) => !state.learned.includes(item.word));
+    }
+
+    // 小卡片同时展示英文和中文，更省空间
+    function renderCard(item) {
+      const gradient = hashGrad(item.word);
+      return `
+        <article class="card" style="--grad:${gradient}" data-word="${escapeHtml(item.word)}">
+          <div class="card-inner">
+            <div class="word">${escapeHtml(item.word)}</div>
+            <div class="word-cn">${escapeHtml(item.meaning)}</div>
+          </div>
+        </article>
+      `;
+    }
+
+    function loadState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+        return {
+          starred: Array.isArray(raw.starred) ? raw.starred : [],
+          learned: Array.isArray(raw.learned) ? raw.learned : []
+        };
+      } catch (error) {
+        return {
+          starred: [],
+          learned: []
+        };
+      }
+    }
+
+    // 首次打开时，默认往“已收藏”里放几条单词
+    function seedStarredWords() {
+      if (localStorage.getItem(STARRED_SEED_KEY) === "done") return;
+
+      const merged = new Set(state.starred);
+      DEFAULT_STARRED_WORDS.forEach((word) => merged.add(word));
+      state.starred = Array.from(merged);
+
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      localStorage.setItem(STARRED_SEED_KEY, "done");
+    }
+
+    function hashGrad(word) {
+      let hash = 0;
+      for (let index = 0; index < word.length; index += 1) {
+        hash = (hash * 31 + word.charCodeAt(index)) >>> 0;
+      }
+      return PALETTES[hash % PALETTES.length];
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => {
+        return {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        }[char];
+      });
+    }
+
+  </script>
+</body>
+</html>

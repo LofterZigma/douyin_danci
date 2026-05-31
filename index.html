@@ -7,7 +7,7 @@
 <title>背单词 · 短视频流</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lobster&family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lobster&family=Lora:ital,wght@0,400;0,600;1,400;1,600;1,700&family=Noto+Serif+SC:wght@700;900&family=Pacifico&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -48,18 +48,42 @@
   }
   header h1 {
     margin: 0;
-    font-family: "Lobster", "Pacifico", "Monotype Corsiva", cursive;
-    font-size: 24px; font-weight: 400;
-    display: flex; align-items: center; gap: 8px;
+    font-family: "Noto Serif SC", "Source Han Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.1;
+    display: flex; align-items: center; gap: 10px;
     color: #ffffff;
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #ffffff 0%, #ffe9c2 45%, #ffc98a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 0 18px rgba(255, 220, 170, 0.25);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
   }
   header h1::before {
     content: "✦";
-    font-size: 14px;
-    color: #ffffff;
-    opacity: 0.85;
+    font-family: "Noto Serif SC", serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffd9a8;
+    -webkit-text-fill-color: #ffd9a8;
+    opacity: 0.95;
+    text-shadow: 0 0 10px rgba(255, 217, 168, 0.45);
+  }
+  header h1 .brand-zh {
+    letter-spacing: 4px;
+  }
+  header h1 .brand-en {
+    margin-left: 6px;
+    font-family: "Lora", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.5px;
   }
   .header-actions { display: flex; gap: 6px; align-items: center; }
   .immerse-btn {
@@ -143,6 +167,7 @@
     padding: 200px max(12px, calc((100% - 1200px) / 2)) 20px;
     margin-top: -200px;
     background: transparent;
+    touch-action: pan-y;
   }
   .feed > .card { position: relative; z-index: 2; }
   .feed > .empty { position: relative; z-index: 2; }
@@ -202,10 +227,11 @@
     width: 100%;
   }
   .word {
-    font-family: "Lobster", "Pacifico", "Monotype Corsiva", "Brush Script MT", cursive;
-    font-size: 30px; font-weight: 400;
-    color: #ffffff; letter-spacing: 0.5px;
-    line-height: 1.2;
+    font-family: "Lora", Georgia, serif;
+    font-style: italic;
+    font-size: 30px; font-weight: 700;
+    color: #ffffff; letter-spacing: -0.5px;
+    line-height: 1.08;
     flex: 0 1 auto;
     min-width: 0;
     word-break: break-word;
@@ -300,6 +326,28 @@
     opacity: 0; transition: opacity 0.3s;
   }
   .video-cover.loaded { opacity: 1; }
+  .play-svg {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 60%; height: 60%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    pointer-events: none;
+    opacity: 0.6;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .play-svg svg { width: 100%; height: 100%; display: block; }
+  .video-link:hover .play-svg,
+  .slide-video:hover .play-svg { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
+  /* 封面底部一层 20% 黑色阴影 */
+  .cover-wrap::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 50%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+    pointer-events: none;
+  }
+  .cover-wrap.loading::after { display: none; }
   .video-title {
     font-size: 11px; line-height: 1.25;
     color: #fff; font-weight: 500;
@@ -382,16 +430,17 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    touch-action: pan-y;
   }
   .pager-swipe {
     position: absolute;
     inset: 0;
-    touch-action: pan-y;
+    touch-action: none;
     cursor: grab;
     z-index: 1;
   }
   .pager-swipe:active { cursor: grabbing; }
-  .pager-bars { position: relative; z-index: 2; }
+  .pager-bars { position: relative; z-index: 2; touch-action: none; }
   .pager-bars {
     display: flex;
     justify-content: center;
@@ -549,8 +598,8 @@
   }
   .slide > * { position: relative; z-index: 2; }
   .slide .word {
-    font-size: 56px; font-weight: 400;
-    letter-spacing: 1.5px;
+    font-size: 56px; font-weight: 700;
+    letter-spacing: -1px;
     text-shadow: 0 4px 24px rgba(0,0,0,0.4);
     word-break: break-word;
   }
@@ -628,7 +677,7 @@
 
 <header>
   <div class="title-row">
-    <h1>似曾相识？</h1>
+    <h1><span class="brand-zh">流光知</span></h1>
     <div class="header-actions">
       <button class="immerse-btn" id="openImmerse" aria-label="沉浸模式" hidden style="display:none;">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -685,71 +734,291 @@
 </div>
 
 <script>
-  const WORDS = [
+  const DEFAULT_WORDS = [
     { word: "serendipity", level: "IELTS", phonetic: "/ˌserənˈdɪpəti/", meaning: "n. 意外发现美好事物的能力",
       en: "Meeting you here was pure serendipity.",
       cn: "在这里遇见你完全是意外的惊喜。",
       videoTitle: "Top 10 beautiful English words you should know",
       source: "TED-Ed", timestamp: "2:14",
       cover: "https://picsum.photos/seed/sere/160",
-      url: "https://www.youtube.com/results?search_query=serendipity+meaning" },
+      url: "douyin_frame.html?videoIndex=5" },
     { word: "ephemeral", level: "IELTS", phonetic: "/ɪˈfemərəl/", meaning: "adj. 短暂的，转瞬即逝的",
       en: "Fame in the digital age is ephemeral.",
       cn: "数字时代的名声是转瞬即逝的。",
       videoTitle: "Why everything feels ephemeral now",
       source: "TED-Ed", timestamp: "4:02",
       cover: "https://picsum.photos/seed/eph/160",
-      url: "https://www.youtube.com/results?search_query=ephemeral" },
+      url: "douyin_frame.html?videoIndex=5" },
     { word: "ubiquitous", level: "CET6", phonetic: "/juːˈbɪkwɪtəs/", meaning: "adj. 无处不在的",
       en: "Smartphones have become ubiquitous in modern life.",
       cn: "智能手机在现代生活中已无处不在。",
       videoTitle: "How smartphones became ubiquitous in 10 years",
       source: "Vox", timestamp: "0:48",
       cover: "https://picsum.photos/seed/ubi/160",
-      url: "https://www.youtube.com/results?search_query=ubiquitous" },
+      url: "douyin_frame.html?videoIndex=6" },
     { word: "resilience", level: "CET6", phonetic: "/rɪˈzɪliəns/", meaning: "n. 韧性，复原力",
       en: "She showed remarkable resilience after the setback.",
       cn: "经历挫折后，她展现出非凡的韧性。",
       videoTitle: "The secret to building resilience",
       source: "TED · Lucy Hone", timestamp: "5:30",
       cover: "https://picsum.photos/seed/res/160",
-      url: "https://www.youtube.com/results?search_query=resilience+ted" },
+      url: "douyin_frame.html?videoIndex=6" },
     { word: "nostalgia", level: "CET6", phonetic: "/nɒˈstældʒə/", meaning: "n. 怀旧，乡愁",
       en: "Old photos always fill me with nostalgia.",
       cn: "老照片总是让我充满怀旧之情。",
       videoTitle: "Why nostalgia is good for you",
       source: "BBC Ideas", timestamp: "1:25",
       cover: "https://picsum.photos/seed/nos/160",
-      url: "https://www.youtube.com/results?search_query=nostalgia" },
+      url: "douyin_frame.html?videoIndex=7" },
     { word: "procrastinate", level: "CET6", phonetic: "/prəʊˈkræstɪneɪt/", meaning: "v. 拖延",
       en: "I tend to procrastinate when the task feels overwhelming.",
       cn: "当任务令人不知所措时，我倾向于拖延。",
       videoTitle: "Inside the mind of a master procrastinator",
       source: "TED · Tim Urban", timestamp: "3:18",
       cover: "https://picsum.photos/seed/pro/160",
-      url: "https://www.youtube.com/results?search_query=procrastinate+ted" },
+      url: "douyin_frame.html?videoIndex=7" },
     { word: "meticulous", level: "IELTS", phonetic: "/məˈtɪkjələs/", meaning: "adj. 一丝不苟的",
       en: "She is meticulous about every detail of her work.",
       cn: "她对工作的每一个细节都一丝不苟。",
       videoTitle: "The meticulous craft of Japanese carpentry",
       source: "Great Big Story", timestamp: "2:40",
       cover: "https://picsum.photos/seed/met/160",
-      url: "https://www.youtube.com/results?search_query=meticulous" },
+      url: "douyin_frame.html?videoIndex=8" },
     { word: "vibrant", level: "CET4", phonetic: "/ˈvaɪbrənt/", meaning: "adj. 充满活力的，鲜艳的",
       en: "Tokyo is a vibrant city full of energy.",
       cn: "东京是一座充满活力的城市。",
       videoTitle: "A walk through vibrant Tokyo streets",
       source: "Walk Travel", timestamp: "0:30",
       cover: "https://picsum.photos/seed/vib/160",
-      url: "https://www.youtube.com/results?search_query=vibrant+tokyo" },
+      url: "douyin_frame.html?videoIndex=8" },
     { word: "curious", level: "CET4", phonetic: "/ˈkjʊəriəs/", meaning: "adj. 好奇的",
       en: "Children are naturally curious about the world.",
       cn: "孩子们对世界天生充满好奇。",
       videoTitle: "Why curious minds learn faster",
       source: "TED-Ed", timestamp: "2:00",
       cover: "https://picsum.photos/seed/cur/160",
-      url: "https://www.youtube.com/results?search_query=curious+kids" }
+      url: "douyin_frame.html?videoIndex=9" }
   ];
+
+  const DOUYIN_WORDS = [
+    {
+      word: 'dialect',
+      level: 'CET6',
+      phonetic: '/ˈdaɪəlekt/',
+      meaning: 'n. 方言，地方话',
+      en: 'The comedian used a local dialect to make the joke funnier.',
+      cn: '这位喜剧演员使用地方方言，让笑话更有趣。',
+      videoTitle: '别欺负天津小学生',
+      source: '@肥龙和老西',
+      cover: 'videos/image_别 欺 负 天 津 小 学 生 ..._0.png',
+      url: 'douyin_frame.html?videoIndex=5',
+      videoIndex: 5
+    },
+    {
+      word: 'humor',
+      level: 'CET4',
+      phonetic: '/ˈhjuːmər/',
+      meaning: 'n. 幽默',
+      en: 'Good humor can make an ordinary story memorable.',
+      cn: '好的幽默能让普通故事变得难忘。',
+      videoTitle: '别欺负天津小学生',
+      source: '@肥龙和老西',
+      cover: 'videos/image_别 欺 负 天 津 小 学 生 ..._0.png',
+      url: 'douyin_frame.html?videoIndex=5',
+      videoIndex: 5
+    },
+    {
+      word: 'salmon',
+      level: 'CET6',
+      phonetic: '/ˈsæmən/',
+      meaning: 'n. 三文鱼，鲑鱼',
+      en: 'The chef prepared fresh salmon after closing the restaurant.',
+      cn: '餐厅打烊后，厨师处理了新鲜三文鱼。',
+      videoTitle: '店里剩了一条三文鱼没卖出去',
+      source: '@张森的下班料理',
+      cover: 'videos/image_店里剩了一条三文鱼没卖出去，厨师..._0.png',
+      url: 'douyin_frame.html?videoIndex=6',
+      videoIndex: 6
+    },
+    {
+      word: 'leftover',
+      level: 'CET6',
+      phonetic: '/ˈleftoʊvər/',
+      meaning: 'n. 剩余物；adj. 剩下的',
+      en: 'He turned the leftover fish into a quiet late-night meal.',
+      cn: '他把剩下的鱼做成了一顿安静的夜宵。',
+      videoTitle: '店里剩了一条三文鱼没卖出去',
+      source: '@张森的下班料理',
+      cover: 'videos/image_店里剩了一条三文鱼没卖出去，厨师..._0.png',
+      url: 'douyin_frame.html?videoIndex=6',
+      videoIndex: 6
+    },
+    {
+      word: 'survival',
+      level: 'CET4',
+      phonetic: '/sərˈvaɪvl/',
+      meaning: 'n. 生存，存活',
+      en: 'The player needed patience and courage for survival at sea.',
+      cn: '玩家需要耐心和勇气才能在海上生存。',
+      videoTitle: '海上流浪记极限生存',
+      source: '@船长MC',
+      cover: 'videos/image_海上流浪记极限生存 一口气看完 ..._0.png',
+      url: 'douyin_frame.html?videoIndex=7',
+      videoIndex: 7
+    },
+    {
+      word: 'hardcore',
+      level: 'CET6',
+      phonetic: '/ˈhɑːrdkɔːr/',
+      meaning: 'adj. 硬核的，极端投入的',
+      en: 'The hardcore challenge made every decision feel important.',
+      cn: '这个硬核挑战让每个决定都显得很重要。',
+      videoTitle: '海上流浪记极限生存',
+      source: '@船长MC',
+      cover: 'videos/image_海上流浪记极限生存 一口气看完 ..._0.png',
+      url: 'douyin_frame.html?videoIndex=7',
+      videoIndex: 7
+    },
+    {
+      word: 'mentor',
+      level: 'CET6',
+      phonetic: '/ˈmentɔːr/',
+      meaning: 'n. 导师，良师',
+      en: 'The old man became a quiet mentor to the young boy.',
+      cn: '老人安静地成为了小男孩的导师。',
+      videoTitle: '老狐狸',
+      source: '@秀才探影',
+      cover: 'videos/image_《老狐狸》一个老头培养一个小孩成..._0.png',
+      url: 'douyin_frame.html?videoIndex=8',
+      videoIndex: 8
+    },
+    {
+      word: 'cunning',
+      level: 'IELTS',
+      phonetic: '/ˈkʌnɪŋ/',
+      meaning: 'adj. 狡黠的，精明的',
+      en: 'The story shows how cunning can be taught as a survival skill.',
+      cn: '这个故事展示了狡黠也能成为一种生存技能。',
+      videoTitle: '老狐狸',
+      source: '@秀才探影',
+      cover: 'videos/image_《老狐狸》一个老头培养一个小孩成..._0.png',
+      url: 'douyin_frame.html?videoIndex=8',
+      videoIndex: 8
+    },
+    {
+      word: 'strategy',
+      level: 'CET6',
+      phonetic: '/ˈstrætədʒi/',
+      meaning: 'n. 策略，战术',
+      en: 'A clear strategy helped the player control the whole map.',
+      cn: '清晰的策略帮助玩家掌控了整张地图。',
+      videoTitle: '三角洲行动攻略',
+      source: '@玖七97（三角洲教学）',
+      cover: 'videos/image_四头四甲单枪M7，13杀清图天才..._0.png',
+      url: 'douyin_frame.html?videoIndex=9',
+      videoIndex: 9
+    },
+    {
+      word: 'tactical',
+      level: 'IELTS',
+      phonetic: '/ˈtæktɪkl/',
+      meaning: 'adj. 战术的，策略性的',
+      en: 'The tactical move changed the result of the match.',
+      cn: '这个战术动作改变了比赛结果。',
+      videoTitle: '三角洲行动攻略',
+      source: '@玖七97（三角洲教学）',
+      cover: 'videos/image_四头四甲单枪M7，13杀清图天才..._0.png',
+      url: 'douyin_frame.html?videoIndex=9',
+      videoIndex: 9
+    }
+  ];
+
+  function loadDouyinWords() {
+    try {
+      const raw = sessionStorage.getItem('douyinDemo/videoDerivedWords');
+      const items = JSON.parse(raw || '[]');
+      if (!Array.isArray(items) || !items.length) return DOUYIN_WORDS;
+      return items.map((item) => {
+        const videoIndex = Number(item.videoIndex);
+        const hasLocalVideo = Number.isFinite(videoIndex);
+        return {
+          ...item,
+          en: item.en || item.example?.en || '',
+          cn: item.cn || item.example?.cn || '',
+          videoTitle: item.videoTitle || item.video?.title || item.word,
+          source: item.source || item.video?.source || '抖音视频',
+          cover: item.cover || item.video?.cover || '',
+          url: hasLocalVideo ? `douyin_frame.html?videoIndex=${encodeURIComponent(videoIndex)}` : (item.url || ''),
+          videoIndex: hasLocalVideo ? videoIndex : item.videoIndex
+        };
+      });
+    } catch (_) {
+      return DOUYIN_WORDS;
+    }
+  }
+
+  const EXTRA_DOUYIN_WORDS = [
+    { word: 'mythic', level: 'IELTS', phonetic: '/ˈmɪθɪk/', meaning: 'adj. 神话般的，传奇的', en: 'The old novel feels mythic because every adventure hides a warning.', cn: '这部老小说带着神话般的气质，因为每段冒险都藏着警示。', videoTitle: '西游记原著到底有多恐怖', source: '@豫州小吏', cover: 'videos/image_《西游记》原著到底有多恐怖，竟然..._0.png', url: 'douyin_frame.html?videoIndex=1', videoIndex: 1 },
+    { word: 'abundant', level: 'CET6', phonetic: '/əˈbʌndənt/', meaning: 'adj. 大量的，丰富的', en: 'Lobsters became abundant along the quiet coast.', cn: '龙虾在这片安静的海岸变得十分丰富。', videoTitle: '澳龙在新西兰泛滥了', source: '@大豪夫妇', cover: 'videos/image_听说昂贵的澳龙在新西兰泛滥了，帅..._0.png', url: 'douyin_frame.html?videoIndex=2', videoIndex: 2 },
+    { word: 'preview', level: 'CET4', phonetic: '/ˈpriːvjuː/', meaning: 'n. 预告，预览', en: 'The preview gives the audience a glimpse of the new story.', cn: '预告让观众先看到这个新故事的一角。', videoTitle: '寻找格桑先生预告', source: '@煎饼果仔（张问初）', cover: 'videos/image_《寻找格桑先生》预告..._0.png', url: 'douyin_frame.html?videoIndex=3', videoIndex: 3 },
+    { word: 'commitment', level: 'CET6', phonetic: '/kəˈmɪtmənt/', meaning: 'n. 承诺，投入', en: 'A big promise often tests real commitment.', cn: '一个重大的承诺往往会检验真正的投入。', videoTitle: '刚子买了我就嫁', source: '@张天琪', cover: 'videos/image_刚子买了我就嫁！你们看看可行不？..._0.png', url: 'douyin_frame.html?videoIndex=4', videoIndex: 4 }
+  ];
+  const WORD_LIMIT = 9;
+  const SENTENCE_TIMELINE = {
+    1: '00:18',
+    2: '00:24',
+    3: '00:12',
+    4: '00:21',
+    5: '00:09',
+    6: '00:16',
+    7: '00:31',
+    8: '00:27',
+    9: '00:14'
+  };
+  function normalizeDouyinWord(item) {
+    const videoIndex = Number(item?.videoIndex);
+    const hasLocalVideo = Number.isFinite(videoIndex);
+    return {
+      ...item,
+      en: item.en || item.example?.en || '',
+      cn: item.cn || item.example?.cn || '',
+      videoTitle: item.videoTitle || item.video?.title || item.word,
+      source: item.source || item.video?.source || '抖音视频',
+      cover: item.cover || item.video?.cover || '',
+      url: hasLocalVideo ? `douyin_frame.html?videoIndex=${encodeURIComponent(videoIndex)}` : (item.url || ''),
+      timestamp: item.timestamp || item.sentenceTime || (hasLocalVideo ? SENTENCE_TIMELINE[videoIndex] : ''),
+      videoIndex: hasLocalVideo ? videoIndex : item.videoIndex
+    };
+  }
+  function pickNineUniqueVideoWords(primary) {
+    const selected = [];
+    const seenWords = new Set();
+    const seenVideos = new Set();
+    [...(primary || []), ...DOUYIN_WORDS, ...EXTRA_DOUYIN_WORDS].forEach((item) => {
+      if (selected.length >= WORD_LIMIT || !item?.word) return;
+      const word = normalizeDouyinWord(item);
+      const wordKey = word.word.toLowerCase();
+      const videoKey = word.videoIndex === undefined || word.videoIndex === null || String(word.videoIndex).trim() === ''
+        ? 'word:' + wordKey
+        : 'video:' + word.videoIndex;
+      if (seenWords.has(wordKey) || seenVideos.has(videoKey)) return;
+      seenWords.add(wordKey);
+      seenVideos.add(videoKey);
+      selected.push(word);
+    });
+    return selected;
+  }
+  function loadDouyinWords() {
+    try {
+      const raw = sessionStorage.getItem('douyinDemo/videoDerivedWords');
+      const items = JSON.parse(raw || '[]');
+      return pickNineUniqueVideoWords(Array.isArray(items) ? items : []);
+    } catch (_) {
+      return pickNineUniqueVideoWords([]);
+    }
+  }
+
+  const WORDS = loadDouyinWords();
 
   const PALETTES = [
     "linear-gradient(135deg, #ff6b6b, #ee4d8d)",
@@ -855,6 +1124,42 @@
     if (pf) pf.style.width = `${(learned / total) * 100}%`;
   }
 
+  function sentenceTimelineText(w) {
+    return w.timestamp ? escapeHtml(w.timestamp) : '';
+  }
+  function videoMetaText(w) {
+    const timeline = sentenceTimelineText(w);
+    const source = escapeHtml(w.source || '');
+    if (timeline && source) return timeline + ' · ' + source;
+    return timeline || source;
+  }
+
+  function videoTarget(w) {
+    return String(w.url || '').includes('douyin_frame.html?videoIndex=') ? '_top' : '_blank';
+  }
+  function getLocalVideoIndex(href) {
+    try {
+      const url = new URL(href, location.href);
+      const isLocalVideo = /douyin_frame\.html$/i.test(url.pathname);
+      const videoIndex = Number(url.searchParams.get('videoIndex'));
+      return isLocalVideo && Number.isFinite(videoIndex) ? videoIndex : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  function openLocalVideoFromCard(event) {
+    const link = event.target.closest('a.video-link, a.slide-video');
+    if (!link) return false;
+    const videoIndex = getLocalVideoIndex(link.getAttribute('href') || '');
+    if (videoIndex === null) return false;
+    if (window.parent && window.parent !== window) {
+      event.preventDefault();
+      window.parent.postMessage({ type: 'douyin-demo:open-video', videoIndex }, '*');
+      return true;
+    }
+    return false;
+  }
+
   function cardHTML(w) {
     const starred = state.starred.includes(w.word);
     const learned = state.learned.includes(w.word);
@@ -894,15 +1199,18 @@
             </div>
           </div>
         </div>
-        <a class="video-link" href="${w.url}" target="_blank" rel="noopener">
+        <a class="video-link" href="${w.url}" target="${videoTarget(w)}" rel="noopener">
           <div class="cover-wrap loading">
             <img class="video-cover" src="${w.cover}" alt="" loading="lazy"
                  onload="this.classList.add('loaded');this.parentNode.classList.remove('loading')"
                  onerror="this.parentNode.classList.remove('loading')" />
+            <span class="play-svg" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="rgba(0,0,0,0.55)" stroke-width="0.8" stroke-linejoin="round"><polygon points="8 5 19 12 8 19 8 5"/></svg>
+            </span>
           </div>
           <div class="video-info">
             <div class="video-title">${escapeHtml(w.videoTitle)}</div>
-            <div class="video-source">${escapeHtml(w.source || '')}${w.timestamp ? ' · ' + escapeHtml(w.timestamp) : ''}</div>
+            <div class="video-source">${videoMetaText(w)}</div>
           </div>
         </a>
       </article>`;
@@ -924,6 +1232,8 @@
 
   // 事件代理 - feed
   document.getElementById('feed').addEventListener('click', e => {
+    if (openLocalVideoFromCard(e)) return;
+
     const reveal = e.target.closest('[data-act="reveal"]');
     if (reveal) { reveal.classList.toggle('revealed'); vibe(5); return; }
 
@@ -977,15 +1287,17 @@
           <button data-act="star" data-word="${escapeHtml(w.word)}" class="${starred ? 'active' : ''}">${starred ? '★' : '☆'}</button>
           <button data-act="learn" data-word="${escapeHtml(w.word)}" class="learned-btn ${learned ? 'active' : ''}">${learned ? '✓' : '○'}</button>
         </div>
-        <a class="slide-video" href="${w.url}" target="_blank" rel="noopener">
+        <a class="slide-video" href="${w.url}" target="${videoTarget(w)}" rel="noopener">
           <div class="cover-wrap loading">
             <img class="video-cover" src="${w.cover}" alt="" loading="lazy"
                  onload="this.classList.add('loaded');this.parentNode.classList.remove('loading')" />
-            <div class="play-overlay">▶</div>
+            <span class="play-svg" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="rgba(0,0,0,0.55)" stroke-width="0.8" stroke-linejoin="round"><polygon points="8 5 19 12 8 19 8 5"/></svg>
+            </span>
           </div>
           <div class="video-info">
             <div class="video-title">${escapeHtml(w.videoTitle)}</div>
-            <div class="video-source">📺 ${escapeHtml(w.source)} · 点击观看</div>
+            <div class="video-source">${videoMetaText(w)}</div>
           </div>
         </a>
         ${idx === 0 ? '<div class="hint-swipe">⬆ 上滑切换下一个</div>' : ''}
@@ -1044,7 +1356,27 @@
 
   document.getElementById('openImmerse')?.addEventListener('click', openImmerse);
   document.getElementById('closeImmerse')?.addEventListener('click', closeImmerse);
-  document.getElementById('viewDetailBtn')?.addEventListener('click', openImmerse);
+  function openWordLibrary() {
+    const target = 'word_swipe_library.html';
+    // 嵌在 iframe 里：通过 postMessage 通知父页面做整页跳转
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'douyin-demo:navigate', target }, '*');
+      } catch (_) {}
+      // 兜底：父窗口同源时直接接管跳转；不同源则在 iframe 内自跳
+      try {
+        setTimeout(() => {
+          if (window.top && window.top !== window) window.top.location.href = target;
+          else window.location.href = target;
+        }, 150);
+      } catch (_) {
+        setTimeout(() => { window.location.href = target; }, 150);
+      }
+      return;
+    }
+    window.location.href = target;
+  }
+  document.getElementById('viewDetailBtn')?.addEventListener('click', openWordLibrary);
   document.getElementById('notInterestedBtn')?.addEventListener('click', (e) => {
     const btn = e.currentTarget;
     const label = btn.querySelector('span');
@@ -1083,21 +1415,69 @@
 
     // 手势：鼠标拖动 + 触摸滑动，超过阈值则切换
     const THRESHOLD = 40;
+    const pagerRoot = document.getElementById('cardPager') || swipe;
+    const feedRoot = document.getElementById('feed');
     let startX = null;
-    function onStart(x) { startX = x; }
-    function onEnd(x) {
+    let startY = null;
+    let swiping = false;
+    let swipeSource = null;
+    function start(x, y) {
+      startX = x; startY = y; swiping = false;
+    }
+    function move(x, y, ev) {
       if (startX === null) return;
       const dx = x - startX;
-      startX = null;
-      if (Math.abs(dx) < THRESHOLD) return;
+      const dy = y - startY;
+      if (!swiping && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        swiping = true;
+      }
+      if (swiping && ev && ev.cancelable) ev.preventDefault();
+    }
+    function end(x) {
+      if (startX === null) return;
+      const dx = x - startX;
+      const wasSwiping = swiping;
+      startX = null; startY = null; swiping = false;
+      if (!wasSwiping || Math.abs(dx) < THRESHOLD) return;
       setIdx(pagerIdx + (dx < 0 ? 1 : -1));
     }
-    swipe.addEventListener('pointerdown', e => { onStart(e.clientX); swipe.setPointerCapture(e.pointerId); });
-    swipe.addEventListener('pointerup',   e => onEnd(e.clientX));
-    swipe.addEventListener('pointercancel', () => { startX = null; });
+    function resetSwipe() {
+      startX = null; startY = null; swiping = false; swipeSource = null;
+    }
+    function bindSwipeSurface(el) {
+      if (!el) return;
+      el.addEventListener('touchstart', e => {
+        if (e.target.closest('button, a, input, textarea, select')) return;
+        const t = e.touches[0]; if (!t) return;
+        swipeSource = el;
+        start(t.clientX, t.clientY);
+      }, { passive: true });
+      el.addEventListener('touchmove', e => {
+        if (swipeSource !== el) return;
+        const t = e.touches[0]; if (!t) return;
+        move(t.clientX, t.clientY, e);
+      }, { passive: false });
+      el.addEventListener('touchend', e => {
+        if (swipeSource !== el) return;
+        const t = e.changedTouches[0];
+        end(t ? t.clientX : (startX || 0));
+      });
+      el.addEventListener('touchcancel', resetSwipe);
+    }
+
+    // 鼠标
+    pagerRoot.addEventListener('mousedown', e => start(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => move(e.clientX, e.clientY, e));
+    window.addEventListener('mouseup', e => end(e.clientX));
+
+    // 触屏：main 区域左右滑动换页，底部分页条也保留可滑
+    bindSwipeSurface(feedRoot);
+    bindSwipeSurface(pagerRoot);
   })();
 
   document.getElementById('immerseScroll').addEventListener('click', e => {
+    if (openLocalVideoFromCard(e)) return;
+
     const reveal = e.target.closest('[data-act="reveal"]');
     if (reveal) { reveal.classList.toggle('revealed'); vibe(5); return; }
     const t = e.target.closest('[data-act]');
@@ -1134,6 +1514,83 @@
   });
 
   render();
+
+  // 进入网页/首次交互后自动全屏（iframe 内点击也能触发顶层窗口全屏）
+  (function initAutoFullscreen() {
+    function tryFullscreen() {
+      try {
+        const topDoc = window.top.document;
+        if (topDoc.fullscreenElement || topDoc.webkitFullscreenElement) return;
+        const el = window.top.document.documentElement;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if (req) req.call(el).catch(() => {});
+      } catch (_) {
+        const el = document.documentElement;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (req) req.call(el).catch(() => {});
+      }
+    }
+    tryFullscreen();
+    const trigger = () => {
+      tryFullscreen();
+      window.removeEventListener('pointerdown', trigger, true);
+      window.removeEventListener('touchstart', trigger, true);
+      window.removeEventListener('keydown', trigger, true);
+    };
+    window.addEventListener('pointerdown', trigger, true);
+    window.addEventListener('touchstart', trigger, true);
+    window.addEventListener('keydown', trigger, true);
+  })();
+
+  // 从背单词页继续向下滑：通知父页面无缝回到第一个视频
+  (function initLoopToFirstVideo() {
+    // 必须在 iframe 内才有意义
+    if (!window.parent || window.parent === window) return;
+
+    let cooling = false;
+    function notifyParent() {
+      if (cooling) return;
+      cooling = true;
+      try {
+        window.parent.postMessage({ type: 'douyinDanci:loopToFirstVideo' }, '*');
+      } catch (_) {}
+      setTimeout(() => { cooling = false; }, 1200);
+    }
+
+    function isAtBottom() {
+      // body / main 滚动容器；index.html 整体页面也算
+      const scrollEl = document.scrollingElement || document.documentElement;
+      const remain = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+      return remain <= 4;
+    }
+
+    // 触屏：在页面已经滚到最底时，再做一次向上滑动（dy<0）即触发
+    let touchStartY = null;
+    let triggered = false;
+    window.addEventListener('touchstart', e => {
+      const t = e.touches[0]; if (!t) return;
+      touchStartY = t.clientY;
+      triggered = false;
+    }, { passive: true });
+    window.addEventListener('touchmove', e => {
+      if (touchStartY == null || triggered) return;
+      const t = e.touches[0]; if (!t) return;
+      const dy = t.clientY - touchStartY;
+      // 手指向上滑（dy < 0）= 内容向上 = 想看"下一条"
+      if (dy < -60 && isAtBottom()) {
+        triggered = true;
+        notifyParent();
+      }
+    }, { passive: true });
+    window.addEventListener('touchend', () => { touchStartY = null; }, { passive: true });
+
+    // 桌面鼠标滚轮：到底后再向下滚动也触发
+    window.addEventListener('wheel', e => {
+      if (e.deltaY > 30 && isAtBottom()) {
+        notifyParent();
+      }
+    }, { passive: true });
+  })();
 </script>
 </body>
 </html>
