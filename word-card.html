@@ -1030,6 +1030,11 @@
       if (window.parent && window.parent !== window) {
         e.preventDefault();
         window.parent.postMessage({ type: 'douyin-demo:open-video', videoIndex }, '*');
+      } else {
+        // 独立页面整页跳转到视频前，记录返回 URL，让 douyin_frame.html 显示返回单词卡悬浮球
+        try {
+          sessionStorage.setItem('douyinDemo/fromWordCardUrl', location.href);
+        } catch (_) {}
       }
     });
     function shouldLoopToVideo(dx, dy) {

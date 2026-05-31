@@ -483,6 +483,43 @@
     z-index: 1;
   }
 
+  /* ============ 返回 word-card 悬浮球 ============ */
+  .back-to-word-fab {
+    position: absolute;
+    right: 0;
+    top: 80pt;
+    transform: scale(0.6);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 35;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    font-size: 10px;
+    line-height: 1.1;
+    gap: 1px;
+    padding: 4px;
+  }
+  .back-to-word-fab.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+  .back-to-word-fab:active { transform: scale(0.92); }
+  .back-to-word-fab svg { display: block; }
+
   /* Home Indicator (iOS 风格) */
   .home-indicator {
     position: absolute;
@@ -563,6 +600,12 @@
     <button class="tab-item">消息</button>
     <button class="tab-item">我</button>
   </nav>
+
+  <!-- 返回 word-card 悬浮球：当用户从 word-card 点击视频卡跳到视频后显示 -->
+  <button class="back-to-word-fab" id="backToWordFab" type="button" aria-label="返回单词卡">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <span>单词</span>
+  </button>
 
   <div class="home-indicator"></div>
 </div>
@@ -681,6 +724,10 @@
           saveVideoDerivedWords();
           ifr.src = 'index.html';
         }
+        // 若用户已回到目标 word-card iframe slide，则取消悬浮球
+        if (backToWordTargetSlide === e.target) {
+          disarmBackToWordFab();
+        }
         // 若该 iframe slide 之后还没有任何 slide，则追加一轮（视频 + iframe）
         if (!e.target.nextElementSibling) {
           appendCycle();
@@ -746,6 +793,71 @@
       scrollToFirstVideo(behavior);
     }
   }
+  // ============ 返回 word-card 悬浮球 ============
+  // 支持两种返回模式：
+  //   1) slide 模式：从 iframe 内的 index.html word-card 通过 postMessage 跳到视频
+  //      → 返回方式为 scrollIntoView 到那个 iframe slide
+  //   2) url 模式：从独立页面（如 word-card.html）通过 location.href 整页跳转过来
+  //      → 返回方式为 history.back() / location.href = 返回 URL
+  const backToWordFab = document.getElementById('backToWordFab');
+  let backToWordTargetSlide = null;
+  let backToWordReturnUrl = '';
+  function armBackToWordFabSlide(iframeSlide) {
+    if (!iframeSlide) return;
+    backToWordTargetSlide = iframeSlide;
+    backToWordReturnUrl = '';
+    updateBackToWordFabVisibility();
+  }
+  function armBackToWordFabUrl(url) {
+    if (!url) return;
+    backToWordTargetSlide = null;
+    backToWordReturnUrl = url;
+    // URL 模式下：只要在视频 slide 上就一直显示
+    backToWordFab.classList.add('visible');
+  }
+  function disarmBackToWordFab() {
+    backToWordTargetSlide = null;
+    backToWordReturnUrl = '';
+    backToWordFab.classList.remove('visible');
+  }
+  function updateBackToWordFabVisibility() {
+    if (backToWordReturnUrl) {
+      backToWordFab.classList.add('visible');
+      return;
+    }
+    if (!backToWordTargetSlide || !backToWordTargetSlide.isConnected) {
+      backToWordFab.classList.remove('visible');
+      return;
+    }
+    const feedRect = videoFeed.getBoundingClientRect();
+    const slideRect = backToWordTargetSlide.getBoundingClientRect();
+    const onWordPage = Math.abs(slideRect.top - feedRect.top) < feedRect.height * 0.4;
+    backToWordFab.classList.toggle('visible', !onWordPage);
+  }
+  backToWordFab.addEventListener('click', () => {
+    if (backToWordReturnUrl) {
+      // 优先 history.back（保留滚动位置 / 卡片状态），失败则直接跳 URL
+      const ref = document.referrer || '';
+      if (ref && ref === backToWordReturnUrl && history.length > 1) {
+        history.back();
+      } else {
+        location.href = backToWordReturnUrl;
+      }
+      return;
+    }
+    if (!backToWordTargetSlide || !backToWordTargetSlide.isConnected) {
+      disarmBackToWordFab();
+      return;
+    }
+    backToWordTargetSlide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  videoFeed.addEventListener('scroll', () => {
+    updateBackToWordFabVisibility();
+  }, { passive: true });
+
+  // 用 alias 保持原 swap 流程兼容
+  const armBackToWordFab = armBackToWordFabSlide;
+
   function swapVideoWithWordPrevious(index) {
     const safeIndex = Number(index);
     if (!Number.isFinite(safeIndex) || !VIDEOS[safeIndex]) {
@@ -953,6 +1065,16 @@
     // 显式 videoIndex 优先于 returnToWordPage flag，避免从 word-card 点击视频时被旧 flag 拦截到背单词页
     sessionStorage.removeItem('douyinDemo/returnToWordPage');
     requestAnimationFrame(() => scrollToVideoIndex(params.get('videoIndex'), 'auto'));
+    // 判断是否从独立 word-card.html 跳来：若是则启用 URL 模式悬浮球
+    const fromWordCard = sessionStorage.getItem('douyinDemo/fromWordCardUrl');
+    let returnUrl = '';
+    if (fromWordCard) {
+      returnUrl = fromWordCard;
+      sessionStorage.removeItem('douyinDemo/fromWordCardUrl');
+    } else if (document.referrer && /\/word-card\.html(\?|$|#)/i.test(document.referrer)) {
+      returnUrl = document.referrer;
+    }
+    if (returnUrl) armBackToWordFabUrl(returnUrl);
   } else if (params.get('wordPage') === '1' || sessionStorage.getItem('douyinDemo/returnToWordPage') === '1') {
     sessionStorage.removeItem('douyinDemo/returnToWordPage');
     requestAnimationFrame(() => scrollToWordPage('auto'));
