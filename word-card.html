@@ -86,17 +86,6 @@
     stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   }
 
-  .progress-pill {
-    background: var(--white-25);
-    border-radius: 24px;
-    padding: 8px 20px;
-    font-family: var(--font-body);
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--white);
-    letter-spacing: 0.3px;
-  }
-
   /* ════════════════════════════════
      单词区
   ════════════════════════════════ */
@@ -281,14 +270,12 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-right: 58px;            /* 留出右侧 FAB 的空间 */
     max-height: calc(82px * 2 + 8px); /* 大约 2 行；超过则滚动 */
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.18) transparent;
     -webkit-overflow-scrolling: touch;
-    padding-right: 4px;
   }
   .video-list::-webkit-scrollbar { width: 4px; }
   .video-list::-webkit-scrollbar-thumb {
@@ -378,13 +365,10 @@
     white-space: nowrap;
   }
 
-  /* ── 右侧 FAB 按钮组 ── */
+  /* ── 顶部右侧按钮组（收藏 / 已学会） ── */
   .fab-group {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
   }
 
@@ -587,7 +571,19 @@
     <button class="btn-back" id="btnBack" aria-label="返回">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <div class="progress-pill" id="progressPill">1 / 1</div>
+    <div class="fab-group">
+      <button class="fab" id="btnStar" aria-label="收藏">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </button>
+      <button class="fab" id="btnLearned" aria-label="已学会" title="已学会">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M8 12.2l2.5 2.5L16.5 9"></path>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- ② 单词 + 音标 -->
@@ -624,24 +620,9 @@
   <!-- ⑥ 弹性空白 -->
   <div class="spacer"></div>
 
-  <!-- ⑦ 视频卡 + FAB -->
+  <!-- ⑦ 视频卡 -->
   <div class="bottom-area">
     <div class="video-list" id="videoList"></div>
-
-    <!-- 右侧浮动按钮 -->
-    <div class="fab-group">
-      <button class="fab" id="btnStar" aria-label="收藏">
-        <svg viewBox="0 0 24 24">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-      </button>
-      <button class="fab" id="btnLearned" aria-label="已学会" title="已学会">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M8 12.2l2.5 2.5L16.5 9"></path>
-        </svg>
-      </button>
-    </div>
   </div>
 
   <!-- ⑧ Next 按钮 -->
@@ -753,7 +734,6 @@
     }
 
     const el = {
-      pill: document.getElementById('progressPill'),
       word: document.getElementById('wordMain'),
       phonetic: document.getElementById('wordPhonetic'),
       meaning: document.getElementById('wordMeaning'),
@@ -910,7 +890,6 @@
 
     function render() {
       const item = list[idx];
-      el.pill.textContent = (idx + 1) + ' / ' + list.length;
       el.word.textContent = item.word;
       el.phonetic.textContent = item.phonetic || '';
       el.meaning.textContent = item.meaning || '';
