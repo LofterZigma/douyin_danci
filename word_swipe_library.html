@@ -189,6 +189,11 @@
       border: 1px solid rgba(255,255,255,0.08);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
       transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .stat:active {
+      transform: scale(0.97);
     }
     .stat.active {
       border-color: rgba(139,123,255,0.32);
@@ -459,11 +464,6 @@
           <polygon points="7 4 21 12 7 20 7 4"></polygon>
         </svg>
       </button>
-    </div>
-    <div class="tabbar" id="tabbar">
-      <button class="tab active" data-page="all" type="button">全部单词</button>
-      <button class="tab" data-page="starred" type="button">收藏单词</button>
-      <button class="tab" data-page="unknown" type="button">不认识单词</button>
     </div>
     <label class="search-wrap" aria-label="搜索单词">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -824,10 +824,10 @@
         document.body.classList.add("is-ready");
       });
 
-      document.getElementById("tabbar").addEventListener("click", (event) => {
-        const button = event.target.closest(".tab");
-        if (!button) return;
-        goToPage(button.dataset.page);
+      document.querySelectorAll(".stat").forEach((card) => {
+        card.addEventListener("click", () => {
+          if (card.dataset.stat) goToPage(card.dataset.stat);
+        });
       });
 
       searchInput.addEventListener("input", (event) => {
@@ -939,8 +939,9 @@
 
     // 统一刷新顶部统计和三个词库面板
     function render() {
+      const starredInWords = WORDS.filter((item) => state.starred.includes(item.word));
       document.getElementById("statAll").textContent = String(WORDS.length);
-      document.getElementById("statStarred").textContent = String(state.starred.length);
+      document.getElementById("statStarred").textContent = String(starredInWords.length);
       document.getElementById("statUnknown").textContent = String(getUnknownWords().length);
 
       pageOrder.forEach((page) => {
