@@ -1035,6 +1035,26 @@
       }
       location.href = 'douyin_frame.html?firstVideo=1';
     }
+
+    // 点击 video-card：在 iframe 内则通过 postMessage 让顶层窗口跳到对应视频，避免把 douyin_frame.html 嵌套加载到 iframe 里
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a.video-card');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      let videoIndex = null;
+      try {
+        const url = new URL(href, location.href);
+        if (/douyin_frame\.html$/i.test(url.pathname)) {
+          const v = Number(url.searchParams.get('videoIndex'));
+          if (Number.isFinite(v)) videoIndex = v;
+        }
+      } catch (_) {}
+      if (videoIndex === null) return;
+      if (window.parent && window.parent !== window) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'douyin-demo:open-video', videoIndex }, '*');
+      }
+    });
     function shouldLoopToVideo(dx, dy) {
       return Math.abs(dy) > 70 && Math.abs(dy) > Math.abs(dx) * 1.15;
     }

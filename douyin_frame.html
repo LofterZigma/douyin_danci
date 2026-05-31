@@ -949,11 +949,13 @@
   if (initSrc) {
     window.loadContent(initSrc);
   }
-  if (params.get('wordPage') === '1' || sessionStorage.getItem('douyinDemo/returnToWordPage') === '1') {
+  if (params.has('videoIndex')) {
+    // 显式 videoIndex 优先于 returnToWordPage flag，避免从 word-card 点击视频时被旧 flag 拦截到背单词页
+    sessionStorage.removeItem('douyinDemo/returnToWordPage');
+    requestAnimationFrame(() => scrollToVideoIndex(params.get('videoIndex'), 'auto'));
+  } else if (params.get('wordPage') === '1' || sessionStorage.getItem('douyinDemo/returnToWordPage') === '1') {
     sessionStorage.removeItem('douyinDemo/returnToWordPage');
     requestAnimationFrame(() => scrollToWordPage('auto'));
-  } else if (params.has('videoIndex')) {
-    requestAnimationFrame(() => scrollToVideoIndex(params.get('videoIndex'), 'auto'));
   } else if (params.get('firstVideo') === '1') {
     requestAnimationFrame(() => scrollToFirstVideo('auto'));
   }
