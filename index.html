@@ -204,7 +204,6 @@
     color: #ffffff;
   }
   .card > * { position: relative; }
-  .card:active { transform: scale(0.985); }
   .card.learned { opacity: 0.5; }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
@@ -1066,18 +1065,43 @@
     speechSynthesis.speak(u);
   }
 
+  function updateStarButtons(word, starred) {
+    document.querySelectorAll(`#feed [data-act="star"][data-word="${CSS.escape(word)}"]`).forEach(btn => {
+      btn.classList.toggle('active', starred);
+      const path = btn.querySelector('svg path');
+      if (path) path.setAttribute('fill', starred ? 'currentColor' : 'none');
+    });
+  }
+
+  function updateLearnButtons(word, learned) {
+    document.querySelectorAll(`#feed [data-act="learn"][data-word="${CSS.escape(word)}"]`).forEach(btn => {
+      btn.classList.toggle('active', learned);
+    });
+    document.querySelectorAll(`#feed .card[data-word="${CSS.escape(word)}"]`).forEach(card => {
+      card.classList.toggle('learned', learned);
+    });
+  }
+
   function toggleStar(word) {
     const i = state.starred.indexOf(word);
+    const starred = i < 0;
     if (i >= 0) { state.starred.splice(i, 1); showToast('已取消收藏'); }
     else { state.starred.push(word); showToast('⭐ 已收藏'); }
-    vibe(10); save(); render(); refreshImmerseSlide(word);
+    vibe(10); save();
+    updateStarButtons(word, starred);
+    updateProgress();
+    refreshImmerseSlide(word);
   }
 
   function toggleLearned(word) {
     const i = state.learned.indexOf(word);
+    const learned = i < 0;
     if (i >= 0) { state.learned.splice(i, 1); showToast('标记为未学'); }
     else { state.learned.push(word); showToast('✓ 已学会'); }
-    vibe(10); save(); render(); refreshImmerseSlide(word);
+    vibe(10); save();
+    updateLearnButtons(word, learned);
+    updateProgress();
+    refreshImmerseSlide(word);
   }
 
   let toastTimer;
