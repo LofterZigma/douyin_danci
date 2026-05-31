@@ -668,7 +668,9 @@
     return slide;
   }
 
-  // IntersectionObserver：iframe 首次进入视口时再加载 index.html
+  // IntersectionObserver：iframe 首次进入视口时再加载 index.html，
+  // 同时在其下方追加新一轮视频（实现“单词页下方循环放第一条视频”的效果，
+  // 用户继续向下滑就是新一轮的视频，而不是物理回到顶部）。
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (!e.isIntersecting || e.intersectionRatio < 0.6) return;
@@ -678,6 +680,10 @@
           saveWordOriginVideo();
           saveVideoDerivedWords();
           ifr.src = 'index.html';
+        }
+        // 若该 iframe slide 之后还没有任何 slide，则追加一轮（视频 + iframe）
+        if (!e.target.nextElementSibling) {
+          appendCycle();
         }
       }
     });
@@ -702,8 +708,23 @@
 
   appendCycle(); // 初始一轮
 
-  // ============ 监听 iframe（背单词页）触底向下滑动：回到第一个视频 ============
+  // ============ 监听 iframe（背单词页）触底向下滑动：滑到下方循环的视频 ============
   let loopCoolingDown = false;
+  function findIframeSlideBySource(srcWindow) {
+    if (!srcWindow) return null;
+    const iframes = feed.querySelectorAll('.iframe-slide iframe');
+    for (const ifr of iframes) {
+      if (ifr.contentWindow === srcWindow) return ifr.closest('.iframe-slide');
+    }
+    return null;
+  }
+  function scrollPastIframeSlide(iframeSlide) {
+    if (!iframeSlide) { scrollToFirstVideo('smooth'); return; }
+    // 保险：若下方还没有 slide，先追加一轮再滚动
+    if (!iframeSlide.nextElementSibling) appendCycle();
+    const next = iframeSlide.nextElementSibling;
+    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   function scrollToFirstVideo(behavior = 'smooth') {
     const firstVideo = feed.querySelector('.video-slide');
     if (firstVideo) {
@@ -865,7 +886,8 @@
     if (e.data.type === 'douyinDanci:loopToFirstVideo') {
       if (loopCoolingDown) return;
       loopCoolingDown = true;
-      scrollToFirstVideo('smooth');
+      const fromSlide = findIframeSlideBySource(e.source);
+      scrollPastIframeSlide(fromSlide);
       setTimeout(() => { loopCoolingDown = false; }, 1000);
       return;
     }
