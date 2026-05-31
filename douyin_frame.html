@@ -557,7 +557,7 @@
   <nav class="tab-bar">
     <button class="tab-item active">首页</button>
     <button class="tab-item">朋友</button>
-    <button class="tab-item center" aria-label="发布">
+    <button class="tab-item center" id="fullscreenTab" aria-label="全屏">
       <div class="tab-plus"><span>+</span></div>
     </button>
     <button class="tab-item">消息</button>
@@ -978,6 +978,19 @@
       document.querySelectorAll('.tab-bar .tab-item').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
     });
+  });
+  // 底部中间"+"按钮：切换全屏
+  document.getElementById('fullscreenTab')?.addEventListener('click', () => {
+    const doc = document;
+    const inFs = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (inFs) {
+      const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+      if (exit) exit.call(doc).catch(() => {});
+    } else {
+      const el = doc.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) req.call(el).catch(() => {});
+    }
   });
 </script>
 
