@@ -671,10 +671,31 @@
   // IntersectionObserver：iframe 首次进入视口时再加载 index.html，
   // 同时在其下方追加新一轮视频（实现“单词页下方循环放第一条视频”的效果，
   // 用户继续向下滑就是新一轮的视频，而不是物理回到顶部）。
+  // 若存在“返回到指定单词卡”的目标（独立 word-card 点击视频跳转时通过 URL 传入），
+  // 则下一张 iframe-slide 加载 word-card.html?word=...&page=...，仅消费一次。
+  let pendingReturnToWordCard = null;
+  function buildWordCardUrl(target) {
+    if (!target || !target.word) return null;
+    const qp = new URLSearchParams();
+    qp.set('word', target.word);
+    if (target.page) qp.set('page', target.page);
+    return 'word-card.html?' + qp.toString();
+  }
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
-      if (!e.isIntersecting || e.intersectionRatio < 0.6) return;
+      if (!e.isIntersecting) return;
       if (e.target.classList.contains('iframe-slide')) {
+        const returnUrl = buildWordCardUrl(pendingReturnToWordCard);
+        if (returnUrl) {
+          // 提早触发（任何可见即跳），并把这张 slide 染成 word-card 底色，
+          // 避免新页面加载期间看到黑色 iframe-slide 的“黑色卡顿”
+          if (e.intersectionRatio <= 0) return;
+          pendingReturnToWordCard = null;
+          e.target.style.background = '#3d8eb9';
+          window.location.href = returnUrl;
+          return;
+        }
+        if (e.intersectionRatio < 0.6) return;
         const ifr = e.target.querySelector('iframe');
         if (ifr && ifr.getAttribute('src') === 'about:blank') {
           saveWordOriginVideo();
@@ -687,7 +708,7 @@
         }
       }
     });
-  }, { root: videoFeed, threshold: [0.6] });
+  }, { root: videoFeed, threshold: [0.01, 0.6] });
 
   // 追加一轮：10 个视频 + 1 个 iframe slide。返回本轮第一个视频元素（用于平滑滚动定位）。
   function appendCycle() {
@@ -746,17 +767,17 @@
       scrollToFirstVideo(behavior);
     }
   }
-  function swapVideoWithWordPrevious(index) {
+  function swapVideoWithWordPrevious(index, behavior = 'smooth') {
     const safeIndex = Number(index);
     if (!Number.isFinite(safeIndex) || !VIDEOS[safeIndex]) {
-      scrollToFirstVideo('smooth');
+      scrollToFirstVideo(behavior);
       return;
     }
     const iframeSlide = firstIframeSlide?.();
     const previousVideo = iframeSlide?.previousElementSibling;
     const targetVideo = feed.querySelector(`.video-slide[data-index="${safeIndex}"]`);
     if (!iframeSlide || !previousVideo || !targetVideo) {
-      scrollToVideoIndex(safeIndex, 'smooth');
+      scrollToVideoIndex(safeIndex, behavior);
       return;
     }
     if (previousVideo !== targetVideo) {
@@ -770,7 +791,7 @@
       previousMarker.remove();
     }
     saveWordOriginVideo();
-    targetVideo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    targetVideo.scrollIntoView({ behavior, block: 'start' });
   }
   function getWordOriginVideo() {
     const iframeSlide = firstIframeSlide?.();
@@ -952,7 +973,23 @@
   if (params.has('videoIndex')) {
     // 显式 videoIndex 优先于 returnToWordPage flag，避免从 word-card 点击视频时被旧 flag 拦截到背单词页
     sessionStorage.removeItem('douyinDemo/returnToWordPage');
-    requestAnimationFrame(() => scrollToVideoIndex(params.get('videoIndex'), 'auto'));
+    // 若 URL 带了 returnWord（独立 word-card 跳转过来），记下来，
+    // 这样这条视频下方的 iframe-slide 会回到那张 word-card，而不是默认的 index.html
+    const returnWord = params.get('returnWord');
+    if (returnWord) {
+      pendingReturnToWordCard = {
+        word: returnWord,
+        page: params.get('returnPage') || ''
+      };
+    }
+    requestAnimationFrame(() => {
+      if (returnWord) {
+        // 把目标视频换到 iframe-slide 之前并瞬间跳到它（直接落位，不做滑动动画）
+        swapVideoWithWordPrevious(params.get('videoIndex'), 'auto');
+      } else {
+        scrollToVideoIndex(params.get('videoIndex'), 'auto');
+      }
+    });
   } else if (params.get('wordPage') === '1' || sessionStorage.getItem('douyinDemo/returnToWordPage') === '1') {
     sessionStorage.removeItem('douyinDemo/returnToWordPage');
     requestAnimationFrame(() => scrollToWordPage('auto'));

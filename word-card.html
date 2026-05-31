@@ -790,8 +790,17 @@
       const hasVideoIndex = rawVideoIndex !== undefined && rawVideoIndex !== null && String(rawVideoIndex).trim() !== '';
       const videoIndex = Number(rawVideoIndex);
       if (hasVideoIndex && Number.isFinite(videoIndex)) {
+        const qp = new URLSearchParams();
+        qp.set('videoIndex', String(videoIndex));
+        // 独立打开（非 iframe 嵌入）时，把当前单词 + 词库分类带过去，
+        // 这样下滑到 iframe-slide 时能回到这张 word-card，而不是默认的 index.html
+        const currentWord = list[idx]?.word || '';
+        if (currentWord) qp.set('returnWord', currentWord);
+        let pageParam = '';
+        try { pageParam = new URL(location.href).searchParams.get('page') || ''; } catch (_) {}
+        if (pageParam) qp.set('returnPage', pageParam);
         return {
-          href: 'douyin_frame.html?videoIndex=' + encodeURIComponent(videoIndex),
+          href: 'douyin_frame.html?' + qp.toString(),
           local: true
         };
       }
